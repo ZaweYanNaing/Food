@@ -18,7 +18,13 @@ try {
         case '/recipes':
             $controller = new RecipeController();
             if ($method === 'GET') {
-                $result = $controller->getAllRecipes();
+                $filters = [];
+                if (isset($_GET['category'])) $filters['category'] = $_GET['category'];
+                if (isset($_GET['difficulty'])) $filters['difficulty'] = $_GET['difficulty'];
+                if (isset($_GET['max_cooking_time'])) $filters['max_cooking_time'] = $_GET['max_cooking_time'];
+                if (isset($_GET['user_id'])) $filters['user_id'] = $_GET['user_id'];
+                
+                $result = $controller->getAllRecipes($filters);
                 echo json_encode($result);
             } elseif ($method === 'POST') {
                 $data = json_decode(file_get_contents('php://input'), true);
@@ -27,11 +33,63 @@ try {
             }
             break;
             
+        case (preg_match('/^\/recipes\/(\d+)$/', $uri, $matches) ? true : false):
+            $recipeId = $matches[1];
+            $controller = new RecipeController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getRecipeById($recipeId);
+                echo json_encode($result);
+            } elseif ($method === 'PUT') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $data['id'] = $recipeId;
+                $result = $controller->updateRecipe($recipeId, $data);
+                echo json_encode($result);
+            } elseif ($method === 'DELETE') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? null;
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'User ID required for deletion']);
+                    break;
+                }
+                $result = $controller->deleteRecipe($recipeId, $userId);
+                echo json_encode($result);
+            }
+            break;
+            
         case '/recipes/search':
             if ($method === 'GET') {
                 $controller = new RecipeController();
                 $query = $_GET['q'] ?? '';
-                $result = $controller->searchRecipes($query);
+                $filters = [];
+                if (isset($_GET['category'])) $filters['category'] = $_GET['category'];
+                if (isset($_GET['difficulty'])) $filters['difficulty'] = $_GET['difficulty'];
+                if (isset($_GET['max_cooking_time'])) $filters['max_cooking_time'] = $_GET['max_cooking_time'];
+                
+                $result = $controller->searchRecipes($query, $filters);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/categories':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $result = $controller->getCategories();
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/user':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $userId = $_GET['user_id'] ?? null;
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'User ID required']);
+                    break;
+                }
+                $result = $controller->getUserRecipes($userId);
                 echo json_encode($result);
             }
             break;

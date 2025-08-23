@@ -88,19 +88,85 @@ class ApiService {
   }
 
   // Recipe endpoints
-  async getRecipes(): Promise<ApiResponse> {
-    return this.request('/recipes');
+  async getRecipes(filters?: {
+    category?: number;
+    difficulty?: string;
+    max_cooking_time?: number;
+    user_id?: number;
+  }): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (filters?.category) queryParams.append('category', filters.category.toString());
+    if (filters?.difficulty) queryParams.append('difficulty', filters.difficulty);
+    if (filters?.max_cooking_time) queryParams.append('max_cooking_time', filters.max_cooking_time.toString());
+    if (filters?.user_id) queryParams.append('user_id', filters.user_id.toString());
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/recipes?${queryString}` : '/recipes';
+    return this.request(endpoint);
   }
 
-  async searchRecipes(query: string): Promise<ApiResponse> {
-    return this.request(`/recipes/search?q=${encodeURIComponent(query)}`);
+  async getRecipeById(id: number): Promise<ApiResponse> {
+    return this.request(`/recipes/${id}`);
   }
 
-  async createRecipe(recipeData: any): Promise<ApiResponse> {
+  async createRecipe(recipeData: {
+    title: string;
+    description?: string;
+    ingredients: string;
+    instructions: string;
+    cooking_time?: number;
+    difficulty?: string;
+    categories?: number[];
+    image_url?: string;
+  }): Promise<ApiResponse> {
     return this.request('/recipes', {
       method: 'POST',
       body: JSON.stringify(recipeData),
     });
+  }
+
+  async updateRecipe(id: number, recipeData: {
+    title: string;
+    description?: string;
+    ingredients: string;
+    instructions: string;
+    cooking_time?: number;
+    difficulty?: string;
+    categories?: number[];
+    image_url?: string;
+  }): Promise<ApiResponse> {
+    return this.request(`/recipes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(recipeData),
+    });
+  }
+
+  async deleteRecipe(id: number, userId: number): Promise<ApiResponse> {
+    return this.request(`/recipes/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
+  async searchRecipes(query: string, filters?: {
+    category?: number;
+    difficulty?: string;
+    max_cooking_time?: number;
+  }): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams({ q: query });
+    if (filters?.category) queryParams.append('category', filters.category.toString());
+    if (filters?.difficulty) queryParams.append('difficulty', filters.difficulty);
+    if (filters?.max_cooking_time) queryParams.append('max_cooking_time', filters.max_cooking_time.toString());
+    
+    return this.request(`/recipes/search?${queryParams.toString()}`);
+  }
+
+  async getCategories(): Promise<ApiResponse> {
+    return this.request('/recipes/categories');
+  }
+
+  async getUserRecipes(userId: number): Promise<ApiResponse> {
+    return this.request(`/recipes/user?user_id=${userId}`);
   }
 }
 

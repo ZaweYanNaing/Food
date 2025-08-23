@@ -1,0 +1,448 @@
+import { useState, useEffect } from 'react';
+import { X, Upload, Plus, Trash2 } from 'lucide-react';
+import { Button } from './ui/button';
+import { useAuth } from '../contexts/AuthContext';
+import apiService from '../services/api';
+import { toast } from 'react-toastify';
+
+interface RecipeFormProps {
+  isOpen: boolean;
+  onClose: () => void;
+  recipe?: Recipe | null;
+  onSuccess: () => void;
+}
+
+interface Recipe {
+  id: number;
+  title: string;
+  description: string;
+  ingredients: string;
+  instructions: string;
+  cooking_time: number;
+  difficulty: string;
+  categories: string[] | number[];
+  image_url?: string;
+}
+
+interface Category {
+  id: number;
+  name: string;
+  description: string;
+}
+
+export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: RecipeFormProps) {
+  const { user } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    ingredients: '',
+    instructions: '',
+    cooking_time: '',
+    difficulty: 'Medium',
+    categories: [] as number[],
+    image_url: '',
+  });
+
+  // Debug logging
+  console.log('RecipeForm render:', { isOpen, user, categories: categories.length, formData });
+
+  useEffect(() => {
+    console.log('RecipeForm useEffect triggered:', { isOpen, recipe });
+    if (isOpen) {
+      loadCategories();
+    }
+  }, [isOpen]); // Only run when isOpen changes
+
+  useEffect(() => {
+    if (isOpen && recipe) {
+      console.log('Setting form data for recipe:', recipe);
+      // Convert category names to IDs if they're strings
+      let categoryIds: number[] = [];
+      if (recipe.categories && recipe.categories.length > 0) {
+        if (typeof recipe.categories[0] === 'string') {
+          // Categories are strings (names), find their IDs
+          categoryIds = (recipe.categories as string[]).map(catName => {
+            const category = categories.find(c => c.name === catName);
+            return category ? category.id : 0;
+          }).filter(id => id !== 0);
+        } else {
+          // Categories are already IDs
+          categoryIds = recipe.categories as number[];
+        }
+      }
+      
+      setFormData({
+        title: recipe.title,
+        description: recipe.description,
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        cooking_time: recipe.cooking_time.toString(),
+        difficulty: recipe.difficulty,
+        categories: categoryIds,
+        image_url: recipe.image_url || '',
+      });
+    } else if (isOpen && !recipe) {
+      console.log('Resetting form for new recipe');
+      resetForm();
+    }
+  }, [isOpen, recipe, categories]); // Run when these change
+
+  const loadCategories = async () => {
+    try {
+      const response = await apiService.getCategories();
+      if (response.success) {
+        setCategories(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading categories:', error);
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      description: '',
+      ingredients: '',
+      instructions: '',
+      cooking_time: '',
+      difficulty: 'Medium',
+      categories: [],
+      image_url: '',
+    });
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    console.log('Input change event triggered:', { name, value, currentFormData: formData });
+    
+    // Use functional state update to ensure we get the latest state
+    setFormData(prevFormData => {
+      const newFormData = {
+        ...prevFormData,
+        [name]: value
+      };
+      console.log('New form data will be:', newFormData);
+      return newFormData;
+    });
+  };
+
+  const handleCategoryChange = (categoryId: number) => {
+    setFormData(prev => ({
+      ...prev,
+      categories: prev.categories.includes(categoryId)
+        ? prev.categories.filter(id => id !== categoryId)
+        : [...prev.categories, categoryId]
+    }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      toast.error('You must be logged in to create recipes');
+      return;
+    }
+
+    // Validation
+    if (!formData.title.trim()) {
+      toast.error('Recipe title is required');
+      return;
+    }
+    if (!formData.ingredients.trim()) {
+      toast.error('Ingredients are required');
+      return;
+    }
+    if (!formData.instructions.trim()) {
+      toast.error('Instructions are required');
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const recipeData = {
+        ...formData,
+        cooking_time: formData.cooking_time ? parseInt(formData.cooking_time) : undefined,
+        user_id: user.id,
+      };
+
+      let response;
+      if (recipe) {
+        // Update existing recipe
+        response = await apiService.updateRecipe(recipe.id, recipeData);
+      } else {
+        // Create new recipe
+        response = await apiService.createRecipe(recipeData);
+      }
+
+      if (response.success) {
+        toast.success(recipe ? 'Recipe updated successfully!' : 'Recipe created successfully!');
+        onSuccess();
+        onClose();
+        resetForm();
+      } else {
+        toast.error(response.message || 'Failed to save recipe');
+      }
+    } catch (error) {
+      toast.error('Error saving recipe');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isLoading) {
+      onClose();
+      resetForm();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b">
+          <h2 className="text-xl font-semibold text-gray-900">
+            {recipe ? 'Edit Recipe' : 'Create New Recipe'}
+          </h2>
+          <button
+            onClick={handleClose}
+            disabled={isLoading}
+            className="text-gray-400 hover:text-gray-600 transition-colors disabled:opacity-50"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Debug Info */}
+          <div className="bg-yellow-100 p-3 rounded border border-yellow-300">
+            <p className="text-sm text-yellow-800">
+              🐛 Debug: Form is open, user: {user?.firstName || 'Not logged in'}, 
+              categories loaded: {categories.length}, 
+              current title: "{formData.title}",
+              isLoading: {isLoading.toString()}
+            </p>
+            {/* Test input */}
+            <input 
+              type="text" 
+              placeholder="Test input - can you type here?" 
+              className="mt-2 w-full px-2 py-1 border border-gray-300 rounded"
+              onChange={(e) => console.log('Test input change:', e.target.value)}
+            />
+            {/* Test button */}
+            <button 
+              type="button"
+              onClick={() => {
+                console.log('Test button clicked, current title:', formData.title);
+                setFormData(prev => ({ ...prev, title: 'Test Title ' + Date.now() }));
+                console.log('Title should be updated');
+              }}
+              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm"
+            >
+              Test: Update Title
+            </button>
+          </div>
+
+          {/* Title and Description */}
+          <div className="grid grid-cols-1 gap-6">
+            <div>
+              <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                Recipe Title *
+              </label>
+              <input
+                type="text"
+                id="title"
+                name="title"
+                value={formData.title}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="Enter recipe title"
+                required
+                // disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
+                Description
+              </label>
+              <textarea
+                id="description"
+                name="description"
+                value={formData.description}
+                onChange={handleInputChange}
+                rows={3}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="Describe your recipe (optional)"
+                disabled={isLoading}
+              />
+            </div>
+          </div>
+
+          {/* Cooking Time and Difficulty */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label htmlFor="cooking_time" className="block text-sm font-medium text-gray-700 mb-2">
+                Cooking Time (minutes)
+              </label>
+              <input
+                type="number"
+                id="cooking_time"
+                name="cooking_time"
+                value={formData.cooking_time}
+                onChange={handleInputChange}
+                min="1"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="e.g., 45"
+                disabled={isLoading}
+              />
+            </div>
+
+            <div>
+              <label htmlFor="difficulty" className="block text-sm font-medium text-gray-700 mb-2">
+                Difficulty Level
+              </label>
+              <select
+                id="difficulty"
+                name="difficulty"
+                value={formData.difficulty}
+                onChange={handleInputChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                disabled={isLoading}
+              >
+                <option value="Easy">Easy</option>
+                <option value="Medium">Medium</option>
+                <option value="Hard">Hard</option>
+              </select>
+            </div>
+          </div>
+
+          {/* Categories */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Categories
+            </label>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              {categories.map((category) => (
+                <label key={category.id} className="flex items-center space-x-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.categories.includes(category.id)}
+                    onChange={() => handleCategoryChange(category.id)}
+                    disabled={isLoading}
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  <span className="text-sm text-gray-700">{category.name}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Image URL */}
+          <div>
+            <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-2">
+              Image URL
+            </label>
+            <div className="flex">
+              <input
+                type="url"
+                id="image_url"
+                name="image_url"
+                value={formData.image_url}
+                onChange={handleInputChange}
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                placeholder="https://example.com/image.jpg"
+                disabled={isLoading}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-l-none border-l-0"
+                disabled={isLoading}
+              >
+                <Upload className="w-4 h-4 mr-2" />
+                Upload
+              </Button>
+            </div>
+          </div>
+
+          {/* Ingredients */}
+          <div>
+            <label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-2">
+              Ingredients *
+            </label>
+            <textarea
+              id="ingredients"
+              name="ingredients"
+              value={formData.ingredients}
+              onChange={handleInputChange}
+              rows={6}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="List all ingredients, one per line or separated by commas"
+              required
+              disabled={isLoading}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              List ingredients with quantities and measurements
+            </p>
+          </div>
+
+          {/* Instructions */}
+          <div>
+            <label htmlFor="instructions" className="block text-sm font-medium text-gray-700 mb-2">
+              Instructions *
+            </label>
+            <textarea
+              id="instructions"
+              name="instructions"
+              value={formData.instructions}
+              onChange={handleInputChange}
+              rows={8}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="Step-by-step cooking instructions"
+              required
+              disabled={isLoading}
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Write clear, step-by-step instructions for cooking
+            </p>
+          </div>
+
+          {/* Form Actions */}
+          <div className="flex items-center justify-end space-x-3 pt-6 border-t border-gray-200">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleClose}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={isLoading}
+              className="bg-orange-600 hover:bg-orange-700"
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  {recipe ? 'Updating...' : 'Creating...'}
+                </>
+              ) : (
+                <>
+                  {recipe ? 'Update Recipe' : 'Create Recipe'}
+                </>
+              )}
+            </Button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}

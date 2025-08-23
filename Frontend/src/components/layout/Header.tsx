@@ -18,6 +18,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
     { name: 'Home', href: '/' },
     { name: 'About', href: '/about' },
     { name: 'Recipes', href: '/recipes' },
+    { name: 'Recipe Management', href: '/recipe-management' },
     { name: 'Community', href: '/community' },
     { name: 'Culinary Resources', href: '/culinary-resources' },
     { name: 'Educational Resources', href: '/educational-resources' },
