@@ -36,7 +36,6 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
   const [categories, setCategories] = useState<Category[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
@@ -85,7 +84,11 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
       
       // Set image preview if recipe has an image
       if (recipe.image_url) {
-        setImagePreview(recipe.image_url);
+        // Ensure we have the full URL for the image preview
+        const fullImageUrl = recipe.image_url.startsWith('http') 
+          ? recipe.image_url 
+          : `http://localhost:8080${recipe.image_url}`;
+        setImagePreview(fullImageUrl);
         setImageFile(null); // No file selected when editing
       } else {
         setImagePreview('');
@@ -173,35 +176,6 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
     }
   };
 
-  const handleImageUpload = async () => {
-    if (!imageFile || !user) {
-      toast.error('Please select an image first');
-      return;
-    }
-
-    setIsUploadingImage(true);
-    
-    try {
-      // Upload using API service
-      const response = await apiService.uploadImage(imageFile, user.id);
-      
-      if (response.success) {
-        setFormData(prev => ({
-          ...prev,
-          image_url: response.data.image_url
-        }));
-        toast.success('Image uploaded successfully!');
-      } else {
-        throw new Error(response.message || 'Upload failed');
-      }
-    } catch (error) {
-      console.error('Image upload error:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
-    } finally {
-      setIsUploadingImage(false);
-    }
-  };
-
   const removeImage = () => {
     setImageFile(null);
     setImagePreview('');
@@ -239,11 +213,37 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
     setIsLoading(true);
 
     try {
+      let finalImageUrl = formData.image_url;
+
+      // Upload image first if a new image was selected
+      if (imageFile) {
+        try {
+          console.log('Starting image upload for file:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
+          const uploadResponse = await apiService.uploadImage(imageFile, user.id);
+          console.log('Upload response:', uploadResponse);
+          
+          if (uploadResponse.success) {
+            finalImageUrl = uploadResponse.data.image_url;
+            console.log('Image uploaded successfully:', finalImageUrl);
+          } else {
+            throw new Error(uploadResponse.message || 'Image upload failed');
+          }
+        } catch (uploadError) {
+          console.error('Image upload error:', uploadError);
+          toast.error('Failed to upload image. Please try again.');
+          setIsLoading(false);
+          return;
+        }
+      }
+
       const recipeData = {
         ...formData,
         cooking_time: formData.cooking_time ? parseInt(formData.cooking_time) : undefined,
         user_id: user.id,
+        image_url: finalImageUrl,
       };
+
+      console.log('Sending recipe data:', recipeData);
 
       let response;
       if (recipe) {
@@ -434,28 +434,17 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
                 type="button"
                 variant="outline"
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isUploadingImage}
+                disabled={isLoading}
                 className="flex items-center"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {imageFile ? 'Change Image' : 'Select Image'}
               </Button>
-              
-              {imageFile && (
-                <Button
-                  type="button"
-                  onClick={handleImageUpload}
-                  disabled={isUploadingImage}
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  {isUploadingImage ? 'Uploading...' : 'Upload Image'}
-                </Button>
-              )}
             </div>
             
             {/* Help text */}
             <p className="text-xs text-gray-500 mt-2">
-              Supported formats: JPG, PNG, GIF. Max size: 5MB.
+              Supported formats: JPG, PNG, GIF. Max size: 5MB. Image will be uploaded when you save the recipe.
             </p>
           </div>
 

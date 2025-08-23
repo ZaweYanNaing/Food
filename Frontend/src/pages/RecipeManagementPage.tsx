@@ -311,7 +311,7 @@ export default function RecipeManagementPage() {
                 <div className="h-48 bg-gray-200 flex items-center justify-center">
                   {recipe.image_url ? (
                     <img
-                      src={recipe.image_url}
+                      src={`http://localhost:8080${recipe.image_url}`}
                       alt={recipe.title}
                       className="w-full h-full object-cover"
                     />

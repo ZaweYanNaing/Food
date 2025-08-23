@@ -142,7 +142,9 @@ try {
                     echo json_encode([
                         'success' => true, 
                         'message' => 'Image uploaded successfully',
-                        'image_url' => $imageUrl
+                        'data' => [
+                            'image_url' => $imageUrl
+                        ]
                     ]);
                 } else {
                     http_response_code(500);
