@@ -94,6 +94,63 @@ try {
             }
             break;
             
+        case '/upload/image':
+            if ($method === 'POST') {
+                // Handle image upload
+                if (!isset($_FILES['image'])) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'No image file provided']);
+                    break;
+                }
+                
+                $file = $_FILES['image'];
+                $userId = $_POST['user_id'] ?? null;
+                
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'User ID required']);
+                    break;
+                }
+                
+                // Validate file
+                $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!in_array($file['type'], $allowedTypes)) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Invalid file type. Only JPG, PNG, and GIF are allowed']);
+                    break;
+                }
+                
+                if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'File size too large. Maximum 5MB allowed']);
+                    break;
+                }
+                
+                // Create uploads directory if it doesn't exist
+                $uploadDir = '../uploads/';
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0755, true);
+                }
+                
+                // Generate unique filename
+                $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+                $filename = 'recipe_' . $userId . '_' . time() . '.' . $extension;
+                $filepath = $uploadDir . $filename;
+                
+                if (move_uploaded_file($file['tmp_name'], $filepath)) {
+                    $imageUrl = '/uploads/' . $filename;
+                    echo json_encode([
+                        'success' => true, 
+                        'message' => 'Image uploaded successfully',
+                        'image_url' => $imageUrl
+                    ]);
+                } else {
+                    http_response_code(500);
+                    echo json_encode(['success' => false, 'error' => 'Failed to save image']);
+                }
+            }
+            break;
+            
         case '/auth/login':
             if ($method === 'POST') {
                 $controller = new AuthController();

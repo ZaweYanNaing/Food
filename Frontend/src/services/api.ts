@@ -21,8 +21,6 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseUrl}${endpoint}`;
     
-    console.log(`Making API request to: ${url}`);
-    
     const defaultOptions: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -31,33 +29,33 @@ class ApiService {
       ...options,
     };
 
+    // Don't set Content-Type for FormData (let browser set it with boundary)
+    if (options.body instanceof FormData) {
+      const headers = { ...defaultOptions.headers };
+      delete (headers as any)['Content-Type'];
+      defaultOptions.headers = headers;
+    }
+
     // Add authorization header if token exists
     const token = localStorage.getItem('token');
     if (token) {
       defaultOptions.headers = {
         ...defaultOptions.headers,
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`
       };
     }
 
     try {
-      console.log('Request options:', defaultOptions);
       const response = await fetch(url, defaultOptions);
-      console.log('Response status:', response.status);
-      console.log('Response headers:', response.headers);
       
       const data = await response.json();
-      console.log('Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.message || `HTTP error! status: ${response.status}`);
       }
-
       return data;
     } catch (error) {
       console.error('API request failed:', error);
-      
-      // Provide more specific error messages
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(`Cannot connect to backend server. Please ensure the backend is running on ${this.baseUrl}`);
       } else if (error instanceof Error) {
@@ -167,6 +165,18 @@ class ApiService {
 
   async getUserRecipes(userId: number): Promise<ApiResponse> {
     return this.request(`/recipes/user?user_id=${userId}`);
+  }
+
+  async uploadImage(imageFile: File, userId: number): Promise<ApiResponse> {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('user_id', userId.toString());
+    
+    return this.request('/upload/image', {
+      method: 'POST',
+      body: formData,
+      headers: {}, // Don't set Content-Type for FormData
+    });
   }
 }
 

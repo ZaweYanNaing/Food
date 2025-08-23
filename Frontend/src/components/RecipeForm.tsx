@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { X, Upload, Plus, Trash2 } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { X, Upload, } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
@@ -34,6 +34,10 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -45,11 +49,7 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
     image_url: '',
   });
 
-  // Debug logging
-  console.log('RecipeForm render:', { isOpen, user, categories: categories.length, formData });
-
   useEffect(() => {
-    console.log('RecipeForm useEffect triggered:', { isOpen, recipe });
     if (isOpen) {
       loadCategories();
     }
@@ -57,7 +57,6 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
 
   useEffect(() => {
     if (isOpen && recipe) {
-      console.log('Setting form data for recipe:', recipe);
       // Convert category names to IDs if they're strings
       let categoryIds: number[] = [];
       if (recipe.categories && recipe.categories.length > 0) {
@@ -83,8 +82,16 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
         categories: categoryIds,
         image_url: recipe.image_url || '',
       });
+      
+      // Set image preview if recipe has an image
+      if (recipe.image_url) {
+        setImagePreview(recipe.image_url);
+        setImageFile(null); // No file selected when editing
+      } else {
+        setImagePreview('');
+        setImageFile(null);
+      }
     } else if (isOpen && !recipe) {
-      console.log('Resetting form for new recipe');
       resetForm();
     }
   }, [isOpen, recipe, categories]); // Run when these change
@@ -111,11 +118,15 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
       categories: [],
       image_url: '',
     });
+    setImageFile(null);
+    setImagePreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    console.log('Input change event triggered:', { name, value, currentFormData: formData });
     
     // Use functional state update to ensure we get the latest state
     setFormData(prevFormData => {
@@ -123,7 +134,6 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
         ...prevFormData,
         [name]: value
       };
-      console.log('New form data will be:', newFormData);
       return newFormData;
     });
   };
@@ -135,6 +145,73 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
         ? prev.categories.filter(id => id !== categoryId)
         : [...prev.categories, categoryId]
     }));
+  };
+
+  const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast.error('Please select an image file');
+        return;
+      }
+      
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error('Image file size must be less than 5MB');
+        return;
+      }
+
+      setImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleImageUpload = async () => {
+    if (!imageFile || !user) {
+      toast.error('Please select an image first');
+      return;
+    }
+
+    setIsUploadingImage(true);
+    
+    try {
+      // Upload using API service
+      const response = await apiService.uploadImage(imageFile, user.id);
+      
+      if (response.success) {
+        setFormData(prev => ({
+          ...prev,
+          image_url: response.data.image_url
+        }));
+        toast.success('Image uploaded successfully!');
+      } else {
+        throw new Error(response.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('Image upload error:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to upload image');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview('');
+    setFormData(prev => ({
+      ...prev,
+      image_url: ''
+    }));
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -220,35 +297,7 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Debug Info */}
-          <div className="bg-yellow-100 p-3 rounded border border-yellow-300">
-            <p className="text-sm text-yellow-800">
-              🐛 Debug: Form is open, user: {user?.firstName || 'Not logged in'}, 
-              categories loaded: {categories.length}, 
-              current title: "{formData.title}",
-              isLoading: {isLoading.toString()}
-            </p>
-            {/* Test input */}
-            <input 
-              type="text" 
-              placeholder="Test input - can you type here?" 
-              className="mt-2 w-full px-2 py-1 border border-gray-300 rounded"
-              onChange={(e) => console.log('Test input change:', e.target.value)}
-            />
-            {/* Test button */}
-            <button 
-              type="button"
-              onClick={() => {
-                console.log('Test button clicked, current title:', formData.title);
-                setFormData(prev => ({ ...prev, title: 'Test Title ' + Date.now() }));
-                console.log('Title should be updated');
-              }}
-              className="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm"
-            >
-              Test: Update Title
-            </button>
-          </div>
-
+          
           {/* Title and Description */}
           <div className="grid grid-cols-1 gap-6">
             <div>
@@ -344,32 +393,70 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
             </div>
           </div>
 
-          {/* Image URL */}
+          {/* Image Upload */}
           <div>
-            <label htmlFor="image_url" className="block text-sm font-medium text-gray-700 mb-2">
-              Image URL
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Recipe Image
             </label>
-            <div className="flex">
-              <input
-                type="url"
-                id="image_url"
-                name="image_url"
-                value={formData.image_url}
-                onChange={handleInputChange}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-l-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                placeholder="https://example.com/image.jpg"
-                disabled={isLoading}
-              />
+            
+            {/* Hidden file input */}
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleImageSelect}
+              className="hidden"
+            />
+            
+            {/* Image preview */}
+            {imagePreview && (
+              <div className="mb-4">
+                <div className="relative inline-block">
+                  <img
+                    src={imagePreview}
+                    alt="Recipe preview"
+                    className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                  />
+                  <button
+                    type="button"
+                    onClick={removeImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center hover:bg-red-600"
+                  >
+                    ×
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            {/* Upload controls */}
+            <div className="flex space-x-3">
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-l-none border-l-0"
-                disabled={isLoading}
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploadingImage}
+                className="flex items-center"
               >
                 <Upload className="w-4 h-4 mr-2" />
-                Upload
+                {imageFile ? 'Change Image' : 'Select Image'}
               </Button>
+              
+              {imageFile && (
+                <Button
+                  type="button"
+                  onClick={handleImageUpload}
+                  disabled={isUploadingImage}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  {isUploadingImage ? 'Uploading...' : 'Upload Image'}
+                </Button>
+              )}
             </div>
+            
+            {/* Help text */}
+            <p className="text-xs text-gray-500 mt-2">
+              Supported formats: JPG, PNG, GIF. Max size: 5MB.
+            </p>
           </div>
 
           {/* Ingredients */}
