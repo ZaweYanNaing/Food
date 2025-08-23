@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Debug Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        .test-section { margin: 20px 0; padding: 20px; border: 1px solid #ddd; border-radius: 5px; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        button { padding: 10px 20px; margin: 5px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        button:hover { background-color: #0056b3; }
+        .result { margin-top: 10px; padding: 10px; background-color: #f8f9fa; border-radius: 3px; white-space: pre-wrap; }
+        .info { background-color: #d1ecf1; border-color: #bee5eb; }
+    </style>
+</head>
+<body>
+    <h1>FoodFusion API Debug Test</h1>
+    
+    <div class="test-section info">
+        <h3>Current Status</h3>
+        <div id="status">Checking services...</div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Backend Connectivity</h3>
+        <button onclick="testBackendConnectivity()">Test Backend</button>
+        <div id="backend-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Registration API</h3>
+        <button onclick="testRegistration()">Test Registration</button>
+        <div id="registration-result" class="result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>Test Frontend API Service</h3>
+        <button onclick="testFrontendService()">Test Frontend Service</button>
+        <div id="frontend-service-result" class="result"></div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080/api';
+        
+        // Check if services are running
+        async function checkServices() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                // Test backend connectivity
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test', password: 'test' })
+                });
+                
+                if (response.status === 401) {
+                    statusDiv.innerHTML = '✅ Backend is running and responding<br>❌ Frontend development server needs to be started';
+                } else {
+                    statusDiv.innerHTML = '✅ Backend is running<br>❓ Unexpected response status: ' + response.status;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Backend is not accessible: ' + error.message;
+            }
+        }
+        
+        async function testBackendConnectivity() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.textContent = 'Testing backend connectivity...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: 'test', password: 'test' })
+                });
+                
+                const data = await response.json();
+                
+                if (response.status === 401) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Backend is accessible!\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❓ Unexpected response:\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Backend connection failed:\nError: ${error.message}\nType: ${error.name}`;
+            }
+        }
+        
+        async function testRegistration() {
+            const resultDiv = document.getElementById('registration-result');
+            resultDiv.textContent = 'Testing registration...';
+            
+            try {
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        firstName: 'Debug',
+                        lastName: 'Test',
+                        email: `debug${Date.now()}@example.com`,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Registration successful!\nUser: ${data.user.firstName} ${data.user.lastName}\nToken: ${data.token}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Registration failed:\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Registration error:\nError: ${error.message}\nType: ${error.name}`;
+            }
+        }
+        
+        async function testFrontendService() {
+            const resultDiv = document.getElementById('frontend-service-result');
+            resultDiv.textContent = 'Testing frontend service...';
+            
+            try {
+                // Simulate the exact API service call
+                const response = await fetch(`${API_BASE}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        firstName: 'Frontend',
+                        lastName: 'Debug',
+                        email: `frontend${Date.now()}@example.com`,
+                        password: 'password123'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok && data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.textContent = `✅ Frontend service test successful!\nUser: ${data.user.firstName} ${data.user.lastName}\nEmail: ${data.user.email}`;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.textContent = `❌ Frontend service test failed:\nStatus: ${response.status}\nResponse: ${JSON.stringify(data, null, 2)}`;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `❌ Frontend service error:\nError: ${error.message}\nType: ${error.name}\nStack: ${error.stack}`;
+            }
+        }
+        
+        // Check services on page load
+        window.addEventListener('load', checkServices);
+    </script>
+</body>
+</html>

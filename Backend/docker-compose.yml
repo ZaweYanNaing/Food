@@ -1,0 +1,48 @@
+
+
+services:
+  www:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: foodfusion_app
+    volumes:
+      - "./:/var/www/html"
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html/public
+
+  db:
+    image: mysql:8.3
+    container_name: foodfusion_db
+    environment:
+      - MYSQL_DATABASE=foodfusion_db
+      - MYSQL_USER=foodfusion_user
+      - MYSQL_PASSWORD=foodfusion_pass
+      - MYSQL_ROOT_PASSWORD=root_pass
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./database/schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    ports:
+      - "3306:3306"
+    restart: always
+    command: --default-authentication-plugin=mysql_native_password
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: foodfusion_phpmyadmin
+    ports:
+      - "8001:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_PORT=3306
+      - PMA_USER=foodfusion_user
+      - PMA_PASSWORD=foodfusion_pass
+    depends_on:
+      - db
+
+volumes:
+  db_data:

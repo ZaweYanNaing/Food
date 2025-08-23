@@ -1,0 +1,69 @@
+-- FoodFusion Database Schema
+
+-- Create users table
+CREATE TABLE IF NOT EXISTS users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    firstName VARCHAR(50) NOT NULL,
+    lastName VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    INDEX idx_email (email),
+    INDEX idx_name (firstName, lastName)
+);
+
+-- Create recipes table
+CREATE TABLE IF NOT EXISTS recipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    ingredients TEXT NOT NULL,
+    instructions TEXT NOT NULL,
+    cooking_time INT,
+    difficulty ENUM('Easy', 'Medium', 'Hard') DEFAULT 'Medium',
+    user_id INT,
+    image_url VARCHAR(500),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Create categories table
+CREATE TABLE IF NOT EXISTS categories (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL UNIQUE,
+    description TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create recipe_categories table for many-to-many relationship
+CREATE TABLE IF NOT EXISTS recipe_categories (
+    recipe_id INT,
+    category_id INT,
+    PRIMARY KEY (recipe_id, category_id),
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+-- Insert sample categories
+INSERT INTO categories (name, description) VALUES
+('Breakfast', 'Morning meals and brunch recipes'),
+('Lunch', 'Midday meal recipes'),
+('Dinner', 'Evening meal recipes'),
+('Dessert', 'Sweet treats and desserts'),
+('Snacks', 'Quick bites and appetizers'),
+('Vegetarian', 'Plant-based recipes'),
+('Vegan', 'Plant-based recipes without animal products'),
+('Gluten-Free', 'Recipes without gluten'),
+('Quick & Easy', 'Fast and simple recipes'),
+('Healthy', 'Nutritious and balanced meals');
+
+-- Insert sample user (password: password123)
+INSERT INTO users (firstName, lastName, email, password) VALUES
+('Admin', 'User', 'admin@foodfusion.com', '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi');
+
+-- Insert sample recipes
+INSERT INTO recipes (title, description, ingredients, instructions, cooking_time, difficulty, user_id) VALUES
+('Classic Pancakes', 'Fluffy and delicious breakfast pancakes', '2 cups all-purpose flour, 2 tablespoons sugar, 2 teaspoons baking powder, 1/2 teaspoon salt, 2 eggs, 1 3/4 cups milk, 1/4 cup melted butter', '1. Mix dry ingredients\n2. Beat eggs and milk\n3. Combine wet and dry ingredients\n4. Cook on griddle until golden', 20, 'Easy', 1),
+('Chicken Stir Fry', 'Quick and healthy chicken stir fry with vegetables', '1 lb chicken breast, 2 cups mixed vegetables, 3 tablespoons soy sauce, 2 cloves garlic, 1 tablespoon ginger, 2 tablespoons oil', '1. Cut chicken into pieces\n2. Stir fry chicken until golden\n3. Add vegetables and sauce\n4. Cook until vegetables are tender', 25, 'Medium', 1);
