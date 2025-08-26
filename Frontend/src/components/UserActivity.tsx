@@ -112,9 +112,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
     }
   };
 
-  const handleViewRecipe = (recipeId: number) => {
-                  navigate(`/recipe-management/${recipeId}`);
-  };
+  
 
   const formatTimeAgo = (dateString: string) => {
     try {
