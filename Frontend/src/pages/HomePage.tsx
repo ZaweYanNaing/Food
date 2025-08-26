@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface NewsFeedItem {
