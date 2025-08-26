@@ -9,6 +9,8 @@ import {
   GraduationCap,
   FileText,
   Phone,
+  LogIn,
+  UserPlus,
 } from "lucide-react"
 
 import { NavMain } from "@/components/ui/nav-main"
@@ -20,11 +22,19 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useAuth } from "../../contexts/AuthContext"
 import { useLocation } from "react-router-dom"
+import { Link } from "react-router-dom"
 
-export function FoodFusionSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+interface FoodFusionSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  onJoinUsClick?: () => void;
+}
+
+export function FoodFusionSidebar({ onJoinUsClick, ...props }: FoodFusionSidebarProps) {
   const { user, logout } = useAuth();
   const location = useLocation();
 
@@ -81,8 +91,6 @@ export function FoodFusionSidebar({ ...props }: React.ComponentProps<typeof Side
     avatar: "/avatars/default.jpg",
   };
 
-
-
   const handleLogout = () => {
     logout();
   };
@@ -94,9 +102,36 @@ export function FoodFusionSidebar({ ...props }: React.ComponentProps<typeof Side
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navMain} />
+        
+        {/* Authentication Navigation Items - only show when not logged in */}
+        {!user && (
+          <div className="mt-4">
+            <div className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
+              Account
+            </div>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link to="/login">
+                    <LogIn className="w-4 h-4" />
+                    <span>Sign In</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild onClick={onJoinUsClick}>
+                  <button className="w-full text-left">
+                    <UserPlus className="w-4 h-4" />
+                    <span>Join Us</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </div>
+        )}
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={userData} onLogout={handleLogout} />
+        {user && <NavUser user={userData} onLogout={handleLogout} />}
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
