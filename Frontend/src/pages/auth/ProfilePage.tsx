@@ -446,6 +446,15 @@ export default function ProfilePage() {
               </div>
             </div>
             <div className="flex space-x-3">
+              <Button
+                variant="outline"
+                onClick={() => navigate('/')}
+                className="bg-white text-[#78C841] hover:bg-[#78C841]/10"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Go to Home
+              </Button>
+              
               {activeTab === 'profile' && (
                 <>
                   <Button

@@ -111,23 +111,39 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
   };
 
   const formatTimeAgo = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diffInSeconds < 60) {
-      return 'Just now';
-    } else if (diffInSeconds < 3600) {
-      const minutes = Math.floor(diffInSeconds / 60);
-      return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
-    } else if (diffInSeconds < 86400) {
-      const hours = Math.floor(diffInSeconds / 3600);
-      return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
-    } else if (diffInSeconds < 2592000) {
-      const days = Math.floor(diffInSeconds / 86400);
-      return `${days} day${days !== 1 ? 's' : ''} ago`;
-    } else {
-      return date.toLocaleDateString();
+    try {
+      // MySQL datetime format (YYYY-MM-DD HH:MM:SS) is stored in UTC
+      // We need to parse it as UTC to get the correct time difference
+      const date = new Date(dateString + 'Z'); // Add 'Z' to treat as UTC
+      const now = new Date();
+      
+      // Calculate the difference in milliseconds
+      const diffInMs = now.getTime() - date.getTime();
+      const diffInSeconds = Math.floor(diffInMs / 1000);
+      
+      // Debug logging
+      console.log('Date string:', dateString);
+      console.log('Parsed date (UTC):', date.toISOString());
+      console.log('Current time (UTC):', now.toISOString());
+      console.log('Difference in seconds:', diffInSeconds);
+      
+      if (diffInSeconds < 60) {
+        return 'Just now';
+      } else if (diffInSeconds < 3600) {
+        const minutes = Math.floor(diffInSeconds / 60);
+        return `${minutes} minute${minutes !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 86400) {
+        const hours = Math.floor(diffInSeconds / 3600);
+        return `${hours} hour${hours !== 1 ? 's' : ''} ago`;
+      } else if (diffInSeconds < 2592000) {
+        const days = Math.floor(diffInSeconds / 86400);
+        return `${days} day${days !== 1 ? 's' : ''} ago`;
+      } else {
+        return date.toLocaleDateString();
+      }
+    } catch (error) {
+      console.error('Error formatting time:', error);
+      return 'Recently';
     }
   };
 
