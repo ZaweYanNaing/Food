@@ -12,6 +12,12 @@ $method = $_SERVER['REQUEST_METHOD'];
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = str_replace('/api', '', $uri);
 
+// Handle OPTIONS requests for CORS preflight
+if ($method === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
+
 // Simple routing
 try {
     switch ($uri) {
@@ -120,9 +126,9 @@ try {
                     break;
                 }
                 
-                if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+                if ($file['size'] > 20 * 1024 * 1024) { // 20MB limit
                     http_response_code(400);
-                    echo json_encode(['success' => false, 'error' => 'File size too large. Maximum 5MB allowed']);
+                    echo json_encode(['success' => false, 'error' => 'File size too large. Maximum 20MB allowed']);
                     break;
                 }
                 
@@ -195,7 +201,143 @@ try {
             if ($method === 'GET') {
                 $controller = new UserController();
                 $token = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-                $result = $controller->getProfile($token);
+                $fallbackUserId = isset($_GET['user_id']) ? intval($_GET['user_id']) : null;
+                
+                $result = $controller->getProfile($token, $fallbackUserId);
+                echo json_encode($result);
+            } elseif ($method === 'PUT') {
+                error_log("=== PUT request received ===");
+                $controller = new UserController();
+                $token = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+                $data = json_decode(file_get_contents('php://input'), true);
+                
+                // Debug logging
+                error_log("Profile update request - Token: " . $token);
+                error_log("Profile update data: " . print_r($data, true));
+                
+                $userId = $controller->getUserIdFromToken($token);
+                
+                // Fallback to user_id from request body if token extraction fails
+                if (!$userId && isset($data['user_id'])) {
+                    $userId = intval($data['user_id']);
+                    error_log("Using fallback user ID from request body: " . $userId);
+                }
+                
+                // Final fallback for development
+                if (!$userId) {
+                    $userId = 1;
+                    error_log("Using default user ID: " . $userId);
+                }
+                
+                error_log("Final user ID for profile update: " . $userId);
+                
+                $result = $controller->updateProfile($userId, $data);
+                error_log("Update result: " . print_r($result, true));
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/users/profile/image':
+            if ($method === 'POST') {
+                $controller = new UserController();
+                
+                if (!isset($_FILES['image'])) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'No image file provided']);
+                    break;
+                }
+                
+                $file = $_FILES['image'];
+                $token = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
+                
+                // Debug logging
+                error_log("=== Profile image upload request ===");
+                error_log("Token: " . $token);
+                error_log("Files: " . print_r($_FILES, true));
+                error_log("POST data: " . print_r($_POST, true));
+                
+                $userId = $controller->getUserIdFromToken($token);
+                
+                // Fallback to user_id from POST data if token extraction fails
+                if (!$userId && isset($_POST['user_id'])) {
+                    $userId = intval($_POST['user_id']);
+                    error_log("Using fallback user ID from POST: " . $userId);
+                }
+                
+                // Final fallback for development
+                if (!$userId) {
+                    $userId = 1;
+                    error_log("Using default user ID: " . $userId);
+                }
+                
+                error_log("Final user ID for upload: " . $userId);
+                
+                $result = $controller->uploadProfileImage($userId, $file);
+                
+                if (isset($result['success']) && $result['success']) {
+                    http_response_code(200);
+                } else {
+                    http_response_code(400);
+                }
+                
+                echo json_encode($result);
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+            }
+            break;
+            
+        case '/users/stats':
+            if ($method === 'GET') {
+                $controller = new UserController();
+                $userId = $_GET['user_id'] ?? 1; // Mock user ID for now
+                $result = $controller->getUserStats($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/users/recipes':
+            if ($method === 'GET') {
+                $controller = new UserController();
+                $userId = $_GET['user_id'] ?? 1; // Mock user ID for now
+                $result = $controller->getUserRecipes($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/users/favorites':
+            if ($method === 'GET') {
+                $controller = new UserController();
+                $userId = $_GET['user_id'] ?? 1; // Mock user ID for now
+                $result = $controller->getUserFavorites($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/users/activity':
+            if ($method === 'GET') {
+                $controller = new UserController();
+                $userId = $_GET['user_id'] ?? 1; // Mock user ID for now
+                $limit = $_GET['limit'] ?? 20;
+                $result = $controller->getUserActivity($userId, $limit);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/users/favorites/toggle':
+            if ($method === 'POST') {
+                $controller = new UserController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? 1; // Mock user ID for now
+                $recipeId = $data['recipe_id'] ?? null;
+                
+                if (!$recipeId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Recipe ID required']);
+                    break;
+                }
+                
+                $result = $controller->toggleFavorite($userId, $recipeId);
                 echo json_encode($result);
             }
             break;

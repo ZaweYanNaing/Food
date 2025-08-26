@@ -81,8 +81,63 @@ class ApiService {
     });
   }
 
-  async getProfile(): Promise<ApiResponse> {
+  async getProfile(userId?: number): Promise<ApiResponse> {
+    if (userId) {
+      // If user ID is provided, we can use it for debugging
+      // In a real app, this would be passed as a query parameter or in the request body
+      return this.request(`/users/profile?user_id=${userId}`);
+    }
     return this.request('/users/profile');
+  }
+
+  async updateProfile(profileData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    bio?: string;
+    location?: string;
+    website?: string;
+    profile_image?: string;
+    user_id?: number;
+  }): Promise<ApiResponse> {
+    // Add user_id to the request if not already present
+    const requestData = {
+      ...profileData,
+      user_id: profileData.user_id || 1 // Default to user ID 1 if not provided
+    };
+    
+    console.log('=== API Service: Updating profile ===');
+    console.log('Request data:', requestData);
+    
+    return this.request('/users/profile', {
+      method: 'PUT',
+      body: JSON.stringify(requestData),
+    });
+  }
+
+  async getUserStats(userId: number): Promise<ApiResponse> {
+    return this.request(`/users/stats?user_id=${userId}`);
+  }
+
+  async getUserRecipes(userId: number): Promise<ApiResponse> {
+    return this.request(`/users/recipes?user_id=${userId}`);
+  }
+
+  async getUserFavorites(userId: number): Promise<ApiResponse> {
+    return this.request(`/users/favorites?user_id=${userId}`);
+  }
+
+  async getUserActivity(userId: number, limit?: number): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams({ user_id: userId.toString() });
+    if (limit) queryParams.append('limit', limit.toString());
+    return this.request(`/users/activity?${queryParams.toString()}`);
+  }
+
+  async toggleFavorite(userId: number, recipeId: number): Promise<ApiResponse> {
+    return this.request('/users/favorites/toggle', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, recipe_id: recipeId }),
+    });
   }
 
   // Recipe endpoints
@@ -163,10 +218,6 @@ class ApiService {
     return this.request('/recipes/categories');
   }
 
-  async getUserRecipes(userId: number): Promise<ApiResponse> {
-    return this.request(`/recipes/user?user_id=${userId}`);
-  }
-
   async uploadImage(imageFile: File, userId: number): Promise<ApiResponse> {
     const formData = new FormData();
     formData.append('image', imageFile);
@@ -177,6 +228,35 @@ class ApiService {
       body: formData,
       headers: {}, // Don't set Content-Type for FormData
     });
+  }
+
+  async uploadProfileImage(imageFile: File, userId: number): Promise<ApiResponse> {
+    const formData = new FormData();
+    formData.append('image', imageFile);
+    formData.append('user_id', userId.toString());
+    
+    console.log('=== API Service: Uploading profile image ===');
+    console.log('User ID:', userId);
+    console.log('File:', imageFile.name, 'Size:', imageFile.size, 'Type:', imageFile.type);
+    console.log('FormData contents:');
+    for (let [key, value] of formData.entries()) {
+      console.log(`  ${key}:`, value);
+    }
+    console.log('Current token:', localStorage.getItem('token'));
+    
+    try {
+      const response = await this.request('/users/profile/image', {
+        method: 'POST',
+        body: formData,
+        headers: {}, // Don't set Content-Type for FormData
+      });
+      
+      console.log('Profile image upload response:', response);
+      return response;
+    } catch (error) {
+      console.error('Profile image upload error:', error);
+      throw error;
+    }
   }
 }
 
