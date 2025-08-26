@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Upload Test</title>
+</head>
+<body>
+    <h1>Profile Upload Test</h1>
+    
+    <form id="uploadForm">
+        <input type="file" id="imageFile" accept="image/*" required>
+        <input type="hidden" id="userId" value="1">
+        <button type="submit">Upload Profile Image</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('imageFile');
+            const userId = document.getElementById('userId').value;
+            const resultDiv = document.getElementById('result');
+            
+            if (!fileInput.files[0]) {
+                resultDiv.innerHTML = '<p style="color: red;">Please select a file</p>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', fileInput.files[0]);
+            formData.append('user_id', userId);
+            
+            try {
+                console.log('Uploading file:', fileInput.files[0].name);
+                console.log('User ID:', userId);
+                
+                const response = await fetch('http://localhost:8080/api/users/profile/image', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                console.log('Upload response:', result);
+                
+                if (result.success) {
+                    resultDiv.innerHTML = `
+                        <p style="color: green;">Upload successful!</p>
+                        <p>Image URL: ${result.data.profile_image}</p>
+                        <img src="http://localhost:8080${result.data.profile_image}" alt="Uploaded" style="max-width: 200px;">
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Upload failed: ${result.error}</p>`;
+                }
+            } catch (error) {
+                console.error('Upload error:', error);
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -28,8 +28,8 @@ class AuthController {
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($user && password_verify($data['password'], $user['password'])) {
-                // Generate a simple token (in production, use JWT)
-                $token = bin2hex(random_bytes(32));
+                // Generate a simple token in format "user_id:random_string" (in production, use JWT)
+                $token = $user['id'] . ':' . bin2hex(random_bytes(16));
                 
                 // Store token in database (you might want to add a tokens table)
                 return [
@@ -123,8 +123,8 @@ class AuthController {
                 $userStmt->execute();
                 $newUser = $userStmt->fetch(PDO::FETCH_ASSOC);
                 
-                // Generate token
-                $token = bin2hex(random_bytes(32));
+                // Generate token in format "user_id:random_string"
+                $token = $userId . ':' . bin2hex(random_bytes(16));
                 
                 return [
                     'success' => true,
