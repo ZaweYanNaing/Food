@@ -47,7 +47,7 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
   };
 
   const handleEditRecipe = (recipeId: number) => {
-    navigate(`/recipes/edit/${recipeId}`);
+                    navigate(`/recipe-management/edit/${recipeId}`);
   };
 
   const handleDeleteRecipe = async (recipeId: number) => {
@@ -106,7 +106,7 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
         <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No Recipes Yet</h3>
         <p className="text-gray-600 mb-4">Start building your recipe collection by sharing your first recipe!</p>
-        <Button onClick={() => navigate('/recipes/create')} className="bg-[#78C841] hover:bg-[#78C841]/90">
+        <Button onClick={() => navigate('/recipe-management/create')} className="bg-[#78C841] hover:bg-[#78C841]/90">
           <Plus className="w-4 h-4 mr-2" />
           Share Your First Recipe
         </Button>
@@ -118,7 +118,7 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Recipe Collection</h2>
-        <Button onClick={() => navigate('/recipes/create')} className="bg-[#78C841] hover:bg-[#78C841]/90">
+        <Button onClick={() => navigate('/recipe-management/create')} className="bg-[#78C841] hover:bg-[#78C841]/90">
           <Plus className="w-4 h-4 mr-2" />
           Share New Recipe
         </Button>

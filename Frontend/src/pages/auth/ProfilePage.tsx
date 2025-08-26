@@ -551,7 +551,7 @@ export default function ProfilePage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
               <div className="space-y-3">
-                <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/recipes/create')}>
+                <Button variant="outline" className="w-full justify-start" onClick={() => navigate('/recipe-management/create')}>
                   <BookOpen className="w-4 h-4 mr-2" />
                   Share a Recipe
                 </Button>

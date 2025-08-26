@@ -107,7 +107,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
   };
 
   const handleViewRecipe = (recipeId: number) => {
-    navigate(`/recipes/${recipeId}`);
+                  navigate(`/recipe-management/${recipeId}`);
   };
 
   const formatTimeAgo = (dateString: string) => {
@@ -172,9 +172,9 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         <Clock className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No Activity Yet</h3>
         <p className="text-gray-600 mb-4">Start using FoodFusion to see your activity history here!</p>
-        <Button onClick={() => navigate('/recipes')} className="bg-[#78C841] hover:bg-[#78C841]/90">
-          Browse Recipes
-        </Button>
+                        <Button onClick={() => navigate('/recipe-management')} className="bg-[#78C841] hover:bg-[#78C841]/90">
+                  Browse Recipes
+                </Button>
       </div>
     );
   }
@@ -237,7 +237,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate(`/recipes/edit/${activity.target_id}`)}
+                      onClick={() => navigate(`/recipe-management/edit/${activity.target_id}`)}
                       className="h-6 px-2 text-xs"
                     >
                       Edit Recipe

@@ -64,7 +64,7 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
   };
 
   const handleViewRecipe = (recipeId: number) => {
-    navigate(`/recipes/${recipeId}`);
+                  navigate(`/recipe-management/${recipeId}`);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -105,9 +105,9 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
         <Heart className="w-16 h-16 text-gray-400 mx-auto mb-4" />
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No Favorite Recipes Yet</h3>
         <p className="text-gray-600 mb-4">Start exploring recipes and add your favorites to this collection!</p>
-        <Button onClick={() => navigate('/recipes')} className="bg-[#78C841] hover:bg-[#78C841]/90">
-          Browse Recipes
-        </Button>
+                        <Button onClick={() => navigate('/recipe-management')} className="bg-[#78C841] hover:bg-[#78C841]/90">
+                  Browse Recipes
+                </Button>
       </div>
     );
   }
