@@ -94,30 +94,36 @@ export default function ProfilePage() {
     setIsLoading(true);
     
     try {
+      console.log('=== Saving profile data ===');
+      console.log('Profile data to save:', profileData);
+      console.log('Current user ID:', user?.id);
+      
       const response = await apiService.updateProfile({
         ...profileData,
-        profile_image: profileImage || undefined // Include the current profile image, convert null to undefined
+        profile_image: profileImage || undefined, // Include the current profile image, convert null to undefined
+        user_id: user?.id || 1 // Include the user ID
       });
+      
+      console.log('Profile update response:', response);
       
       if (response.success) {
         setIsEditing(false);
         // Reload profile and stats
         await loadUserProfile();
         await loadUserStats();
+        alert('Profile updated successfully!');
       } else {
         alert('Failed to update profile: ' + (response.message || 'Unknown error'));
       }
     } catch (error) {
+      console.error('Profile update error:', error);
       alert('Failed to update profile: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleCancelEdit = () => {
-    loadUserProfile(); // Reset to original data
-    setIsEditing(false);
-  };
+ 
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -130,9 +136,9 @@ export default function ProfilePage() {
       return;
     }
 
-    // Validate file size (5MB limit)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('File size too large. Please select an image smaller than 5MB.');
+    // Validate file size (20MB limit)
+    if (file.size > 20 * 1024 * 1024) {
+      alert('File size too large. Please select an image smaller than 20MB.');
       return;
     }
 
@@ -209,7 +215,7 @@ export default function ProfilePage() {
                         src={`http://localhost:8080${profileImage}`} 
                         alt="Profile" 
                         className="w-24 h-24 rounded-lg object-cover shadow-lg"
-                        onError={(e) => {
+                        onError={() => {
                           console.error('Failed to load profile image:', profileImage);
                           setProfileImage(null);
                         }}
@@ -240,7 +246,7 @@ export default function ProfilePage() {
                   <div>
                     <h3 className="text-lg font-medium text-gray-900 mb-2">Update Profile Picture</h3>
                     <p className="text-sm text-gray-600 mb-4">
-                      Upload a new profile picture. Supported formats: JPG, PNG, GIF. Maximum size: 5MB.
+                      Upload a new profile picture. Supported formats: JPG, PNG, GIF. Maximum size: 20MB.
                     </p>
                     {isEditing && (
                       <label className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#78C841] hover:bg-[#78C841]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#78C841] cursor-pointer">
@@ -404,7 +410,7 @@ export default function ProfilePage() {
                     src={`http://localhost:8080${profileImage}`} 
                     alt="Profile" 
                     className="w-16 h-16 rounded-lg object-cover shadow-lg"
-                    onError={(e) => {
+                    onError={() => {
                       console.error('Failed to load header profile image:', profileImage);
                       setProfileImage(null);
                     }}
@@ -450,16 +456,7 @@ export default function ProfilePage() {
                     {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
                     {isEditing ? 'Cancel' : 'Edit Profile'}
                   </Button>
-                  {isEditing && (
-                    <Button
-                      variant="outline"
-                      onClick={handleCancelEdit}
-                      className="bg-white text-[#78C841] hover:bg-[#78C841]/10"
-                    >
-                      <X className="w-4 h-4 mr-2" />
-                      Cancel
-                    </Button>
-                  )}
+                
                   {isEditing && (
                     <Button
                       onClick={handleSave}

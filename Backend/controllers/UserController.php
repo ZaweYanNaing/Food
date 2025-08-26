@@ -188,9 +188,9 @@ class UserController {
                 return ['success' => false, 'error' => 'Invalid file type. Only JPG, PNG, and GIF are allowed'];
             }
             
-            if ($imageFile['size'] > 5 * 1024 * 1024) { // 5MB limit
+            if ($imageFile['size'] > 20 * 1024 * 1024) { // 20MB limit
                 error_log("File size too large: " . $imageFile['size']);
-                return ['success' => false, 'error' => 'File size too large. Maximum 5MB allowed'];
+                return ['success' => false, 'error' => 'File size too large. Maximum 20MB allowed'];
             }
             
             // Create uploads directory if it doesn't exist

@@ -126,9 +126,9 @@ try {
                     break;
                 }
                 
-                if ($file['size'] > 5 * 1024 * 1024) { // 5MB limit
+                if ($file['size'] > 20 * 1024 * 1024) { // 20MB limit
                     http_response_code(400);
-                    echo json_encode(['success' => false, 'error' => 'File size too large. Maximum 5MB allowed']);
+                    echo json_encode(['success' => false, 'error' => 'File size too large. Maximum 20MB allowed']);
                     break;
                 }
                 
@@ -209,14 +209,27 @@ try {
                 error_log("=== PUT request received ===");
                 $controller = new UserController();
                 $token = $_SERVER['HTTP_AUTHORIZATION'] ?? '';
-                $userId = $controller->getUserIdFromToken($token) ?? 1; // Get user ID from token
                 $data = json_decode(file_get_contents('php://input'), true);
                 
                 // Debug logging
-                error_log("Profile update request - User ID: " . $userId);
+                error_log("Profile update request - Token: " . $token);
                 error_log("Profile update data: " . print_r($data, true));
-                error_log("Controller class: " . get_class($controller));
-                error_log("Controller methods: " . print_r(get_class_methods($controller), true));
+                
+                $userId = $controller->getUserIdFromToken($token);
+                
+                // Fallback to user_id from request body if token extraction fails
+                if (!$userId && isset($data['user_id'])) {
+                    $userId = intval($data['user_id']);
+                    error_log("Using fallback user ID from request body: " . $userId);
+                }
+                
+                // Final fallback for development
+                if (!$userId) {
+                    $userId = 1;
+                    error_log("Using default user ID: " . $userId);
+                }
+                
+                error_log("Final user ID for profile update: " . $userId);
                 
                 $result = $controller->updateProfile($userId, $data);
                 error_log("Update result: " . print_r($result, true));

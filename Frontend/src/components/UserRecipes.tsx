@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, ChefHat, Edit, Trash2, Plus } from 'lucide-react';
+import { BookOpen, Clock, Edit, Trash2, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';

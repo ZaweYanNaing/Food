@@ -98,10 +98,20 @@ class ApiService {
     location?: string;
     website?: string;
     profile_image?: string;
+    user_id?: number;
   }): Promise<ApiResponse> {
+    // Add user_id to the request if not already present
+    const requestData = {
+      ...profileData,
+      user_id: profileData.user_id || 1 // Default to user ID 1 if not provided
+    };
+    
+    console.log('=== API Service: Updating profile ===');
+    console.log('Request data:', requestData);
+    
     return this.request('/users/profile', {
       method: 'PUT',
-      body: JSON.stringify(profileData),
+      body: JSON.stringify(requestData),
     });
   }
 
