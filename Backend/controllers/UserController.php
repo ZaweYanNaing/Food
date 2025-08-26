@@ -296,10 +296,10 @@ class UserController {
     
     public function getUserRecipes($userId) {
         try {
-            $query = "SELECT r.*, c.name as category_name 
+            // Get all recipes for the user without categories to avoid duplicates
+            $query = "SELECT r.id, r.title, r.description, r.ingredients, r.instructions, 
+                             r.cooking_time, r.difficulty, r.image_url, r.user_id, r.created_at
                       FROM recipes r 
-                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id 
-                      LEFT JOIN categories c ON rc.category_id = c.id 
                       WHERE r.user_id = :user_id 
                       ORDER BY r.created_at DESC";
             $stmt = $this->db->prepare($query);
@@ -308,17 +308,11 @@ class UserController {
             
             $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Group recipes by category
-            $groupedRecipes = [];
-            foreach ($recipes as $recipe) {
-                $category = $recipe['category_name'] ?? 'Uncategorized';
-                if (!isset($groupedRecipes[$category])) {
-                    $groupedRecipes[$category] = [];
-                }
-                $groupedRecipes[$category][] = $recipe;
-            }
+            // Debug logging
+            error_log("getUserRecipes: Found " . count($recipes) . " recipes for user " . $userId);
             
-            return ['success' => true, 'data' => $groupedRecipes];
+            // Return recipes as a simple array, not grouped by category
+            return ['success' => true, 'data' => $recipes];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }

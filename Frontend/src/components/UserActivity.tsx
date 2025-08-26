@@ -222,14 +222,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
                     )}
                     <div className="flex-1">
                       <p className="text-sm text-gray-600">{activity.target_title}</p>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleViewRecipe(activity.target_id)}
-                        className="mt-1 h-6 px-2 text-xs"
-                      >
-                        View Recipe
-                      </Button>
+                      
                     </div>
                   </div>
                 )}

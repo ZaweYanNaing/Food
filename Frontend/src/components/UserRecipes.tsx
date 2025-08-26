@@ -19,7 +19,7 @@ interface UserRecipesProps {
 }
 
 export default function UserRecipes({ userId }: UserRecipesProps) {
-  const [recipes, setRecipes] = useState<Record<string, Recipe[]>>({});
+  const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -35,6 +35,12 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
       const response = await apiService.getUserRecipes(userId);
       
       if (response.success && response.data) {
+        // Backend now handles duplicates properly, so we can use the data directly
+        console.log('UserRecipes: Received data:', response.data);
+        console.log('UserRecipes: Total categories:', Object.keys(response.data).length);
+        const totalRecipes = Object.values(response.data).flat().length;
+        console.log('UserRecipes: Total recipes:', totalRecipes);
+        
         setRecipes(response.data);
       } else {
         setError('Failed to load recipes');
@@ -98,9 +104,7 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
     );
   }
 
-  const totalRecipes = Object.values(recipes).reduce((acc, categoryRecipes) => acc + categoryRecipes.length, 0);
-
-  if (totalRecipes === 0) {
+  if (recipes.length === 0) {
     return (
       <div className="text-center py-8">
         <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
@@ -117,86 +121,75 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-900">My Recipe Collection</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">My Recipe Collection</h2>
+          <p className="text-gray-600 mt-1">{recipes.length} recipe{recipes.length !== 1 ? 's' : ''}</p>
+        </div>
         <Button onClick={() => navigate('/recipe-management/create')} className="bg-[#78C841] hover:bg-[#78C841]/90">
           <Plus className="w-4 h-4 mr-2" />
           Share New Recipe
         </Button>
       </div>
 
-      {Object.entries(recipes).map(([category, categoryRecipes]) => (
-        <div key={category} className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="bg-gradient-to-r from-[#78C841] to-[#B4E50D] px-6 py-4">
-            <h3 className="text-lg font-semibold text-white flex items-center">
-              <BookOpen className="w-5 h-5 mr-2" />
-              {category}
-              <span className="ml-2 text-sm bg-white/20 px-2 py-1 rounded-full">
-                {categoryRecipes.length} recipe{categoryRecipes.length !== 1 ? 's' : ''}
-              </span>
-            </h3>
-          </div>
-          
-          <div className="p-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {categoryRecipes.map((recipe) => (
-                <div key={recipe.id} className="bg-gray-50 rounded-lg p-4 hover:shadow-md transition-shadow">
-                  {recipe.image_url && (
-                    <div className="w-full h-32 bg-gray-200 rounded-lg mb-3 overflow-hidden">
-                      <img 
-                        src={recipe.image_url} 
-                        alt={recipe.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  
-                  <h4 className="font-semibold text-gray-900 mb-2 line-clamp-2">{recipe.title}</h4>
-                  
-                  {recipe.description && (
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">{recipe.description}</p>
-                  )}
-                  
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center space-x-3 text-sm text-gray-500">
-                      <div className="flex items-center">
-                        <Clock className="w-4 h-4 mr-1" />
-                        {recipe.cooking_time} min
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(recipe.difficulty)}`}>
-                        {recipe.difficulty}
-                      </span>
-                    </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {recipes.map((recipe) => (
+          <div key={recipe.id} className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow">
+            {recipe.image_url && (
+              <div className="w-full h-48 bg-gray-200 overflow-hidden">
+                <img 
+                  src={recipe.image_url} 
+                  alt={recipe.title}
+                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+            )}
+            
+            <div className="p-4">
+              <h3 className="font-semibold text-gray-900 line-clamp-2 mb-2">{recipe.title}</h3>
+              
+              {recipe.description && (
+                <p className="text-gray-600 text-sm mb-3 line-clamp-2">{recipe.description}</p>
+              )}
+              
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center space-x-3 text-sm text-gray-500">
+                  <div className="flex items-center">
+                    <Clock className="w-4 h-4 mr-1" />
+                    {recipe.cooking_time} min
                   </div>
-                  
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-400">
-                      {new Date(recipe.created_at).toLocaleDateString()}
-                    </span>
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditRecipe(recipe.id)}
-                        className="h-8 px-3"
-                      >
-                        <Edit className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleDeleteRecipe(recipe.id)}
-                        className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
-                      >
-                        <Trash2 className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
+                  <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(recipe.difficulty)}`}>
+                    {recipe.difficulty}
+                  </span>
                 </div>
-              ))}
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-gray-400">
+                  {new Date(recipe.created_at).toLocaleDateString()}
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleEditRecipe(recipe.id)}
+                    className="h-8 px-3"
+                  >
+                    <Edit className="w-3 h-3" />
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleDeleteRecipe(recipe.id)}
+                    className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </Button>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 }

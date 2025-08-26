@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Heart, Clock, User, Trash2, RefreshCw } from 'lucide-react';
+import { Heart, Clock, User, Trash2, RefreshCw, X } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
@@ -26,6 +26,8 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedRecipe, setSelectedRecipe] = useState<FavoriteRecipe | null>(null);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -102,8 +104,9 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
     }
   };
 
-  const handleViewRecipe = (recipeId: number) => {
-                  navigate(`/recipe-management/${recipeId}`);
+  const handleViewRecipe = (recipe: FavoriteRecipe) => {
+    setSelectedRecipe(recipe);
+    setShowRecipeModal(true);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -243,7 +246,7 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
                 </span>
                 <Button
                   size="sm"
-                  onClick={() => handleViewRecipe(recipe.id)}
+                  onClick={() => handleViewRecipe(recipe)}
                   className="bg-[#78C841] hover:bg-[#78C841]/90"
                 >
                   View Recipe
@@ -253,6 +256,98 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
           </div>
         ))}
       </div>
+
+      {/* Recipe View Modal */}
+      {showRecipeModal && selectedRecipe && (
+        <div className="fixed inset-0 bg-gray-500/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold text-gray-900">{selectedRecipe.title}</h2>
+                <button
+                  onClick={() => setShowRecipeModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {/* Recipe Image */}
+              {selectedRecipe.image_url && (
+                <div className="mb-6">
+                  <img
+                    src={selectedRecipe.image_url}
+                    alt={selectedRecipe.title}
+                    className="w-full h-64 object-cover rounded-lg"
+                  />
+                </div>
+              )}
+
+              {/* Recipe Details */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-2xl font-bold text-[#78C841]">
+                    {selectedRecipe.cooking_time} min
+                  </div>
+                  <div className="text-sm text-gray-600">Cooking Time</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className={`text-2xl font-bold px-4 py-2 rounded-full ${getDifficultyColor(selectedRecipe.difficulty)}`}>
+                    {selectedRecipe.difficulty}
+                  </div>
+                  <div className="text-sm text-gray-600">Difficulty</div>
+                </div>
+                <div className="text-center p-4 bg-gray-50 rounded-lg">
+                  <div className="text-2xl font-bold text-gray-900">
+                    {selectedRecipe.category_name || 'N/A'}
+                  </div>
+                  <div className="text-sm text-gray-600">Category</div>
+                </div>
+              </div>
+
+              {/* Description */}
+              {selectedRecipe.description && (
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Description</h3>
+                  <p className="text-gray-600">{selectedRecipe.description}</p>
+                </div>
+              )}
+
+              {/* Author Info */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Author</h3>
+                <div className="flex items-center space-x-2">
+                  <User className="w-4 h-4 text-gray-500" />
+                  <span className="text-gray-600">{selectedRecipe.firstName} {selectedRecipe.lastName}</span>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+                <div className="text-sm text-gray-600">
+                  Added to favorites on {new Date(selectedRecipe.created_at).toLocaleDateString()}
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      handleRemoveFavorite(selectedRecipe.id);
+                      setShowRecipeModal(false);
+                    }}
+                    className="text-red-600 border-red-300 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Remove from Favorites
+                  </Button>
+                  <Button onClick={() => setShowRecipeModal(false)}>
+                    Close
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
