@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle, Salad } from 'lucide-react';
 import {Button} from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -58,8 +58,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-            <span className="text-white text-xl font-bold">🍳</span>
+          <div className="w-12 h-12 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+            <span className="text-white text-xl font-bold"><Salad /></span>
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">

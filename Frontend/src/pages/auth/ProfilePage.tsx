@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Mail, Calendar, Edit, Save, X, Camera, LogOut, Settings, Heart, BookOpen, Download } from 'lucide-react';
+import { User, Mail, Calendar, Edit, Save, X, LogOut, Settings, Heart, BookOpen, Download, Salad } from 'lucide-react';
 import {Button} from '../../components/ui/button';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -123,25 +123,25 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-red-500">
+      <div className="bg-gradient-to-r from-[#78C841] to-[#B4E50D]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center shadow-lg">
-                <span className="text-3xl">🍳</span>
+              <div className="w-15 h-15 bg-white rounded-lg flex items-center justify-center shadow-lg">
+                <span className="text-4xl"><User /></span>
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
                   {user.firstName} {user.lastName}
                 </h1>
-                <p className="text-orange-100">Member since {new Date(userStats.memberSince).toLocaleDateString()}</p>
+                <p className="text-white/90">Member since {new Date(userStats.memberSince).toLocaleDateString()}</p>
               </div>
             </div>
             <div className="flex space-x-3">
               <Button
                 variant="outline"
                 onClick={() => setIsEditing(!isEditing)}
-                className="bg-white text-orange-600 hover:bg-orange-50"
+                className="bg-white text-[#78C841] hover:bg-[#78C841]/10"
               >
                 {isEditing ? <X className="w-4 h-4 mr-2" /> : <Edit className="w-4 h-4 mr-2" />}
                 {isEditing ? 'Cancel' : 'Edit Profile'}
@@ -150,11 +150,11 @@ export default function ProfilePage() {
                 <Button
                   onClick={handleSave}
                   disabled={isLoading}
-                  className="bg-white text-orange-600 hover:bg-orange-50"
+                  className="bg-white text-[#78C841] hover:bg-[#78C841]/10"
                 >
                   {isLoading ? (
                     <>
-                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-orange-600 mr-2"></div>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#78C841] mr-2"></div>
                       Saving...
                     </>
                   ) : (
@@ -268,8 +268,8 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 {recentActivity.map((activity, index) => (
                   <div key={index} className="flex items-center space-x-4 p-3 bg-gray-50 rounded-lg">
-                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                      <activity.icon className="w-5 h-5 text-orange-600" />
+                    <div className="w-10 h-10 bg-[#78C841]/20 rounded-full flex items-center justify-center">
+                      <activity.icon className="w-5 h-5 text-[#78C841]" />
                     </div>
                     <div className="flex-1">
                       <p className="text-sm font-medium text-gray-900">{activity.title}</p>
@@ -289,23 +289,23 @@ export default function ProfilePage() {
               <div className="space-y-4">
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Recipes Shared</span>
-                  <span className="font-semibold text-orange-600">{userStats.recipesShared}</span>
+                  <span className="font-semibold text-[#78C841]">{userStats.recipesShared}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Recipes Liked</span>
-                  <span className="font-semibold text-orange-600">{userStats.recipesLiked}</span>
+                  <span className="font-semibold text-[#B4E50D]">{userStats.recipesLiked}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Recipes Saved</span>
-                  <span className="font-semibold text-orange-600">{userStats.recipesSaved}</span>
+                  <span className="font-semibold text-[#FF9B2F]">{userStats.recipesSaved}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Resources Downloaded</span>
-                  <span className="font-semibold text-orange-600">{userStats.resourcesDownloaded}</span>
+                  <span className="font-semibold text-[#78C841]">{userStats.resourcesDownloaded}</span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Community Points</span>
-                  <span className="font-semibold text-orange-600">{userStats.communityPoints}</span>
+                  <span className="font-semibold text-[#B4E50D]">{userStats.communityPoints}</span>
                 </div>
               </div>
             </div>

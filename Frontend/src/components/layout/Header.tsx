@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Menu, X, User, LogOut } from 'lucide-react';
+import { Menu, X, User, LogOut, Salad } from 'lucide-react';
 import { Button } from '../ui/button';
 
 
@@ -17,8 +17,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'About', href: '/about' },
-    { name: 'Recipes', href: '/recipes' },
-    { name: 'Recipe Management', href: '/recipe-management' },
+    { name: 'Recipes', href: '/recipe-management' },
     { name: 'Community', href: '/community' },
     { name: 'Culinary Resources', href: '/culinary-resources' },
     { name: 'Educational Resources', href: '/educational-resources' },
@@ -38,8 +37,8 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
         <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-2">
-            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-lg flex items-center justify-center">
-              <span className="text-white text-xl font-bold">🍳</span>
+            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-green-600 rounded-lg flex items-center justify-center">
+              <span className="text-white text-xl font-bold"><Salad /></span>
             </div>
             <span className="text-2xl font-bold text-gray-900">FoodFusion</span>
           </Link>
@@ -52,8 +51,8 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                 to={item.href}
                 className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                   isActive(item.href)
-                    ? 'text-orange-600 bg-orange-50'
-                    : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
+                    ? 'text-[#78C841] bg-[#78C841]/10'
+                    : 'text-gray-700 hover:text-[#78C841] hover:bg-[#78C841]/10'
                 }`}
               >
                 {item.name}
@@ -67,7 +66,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
               <div className="flex items-center space-x-4">
                 <Link
                   to="/profile"
-                  className="flex items-center space-x-2 text-gray-700 hover:text-orange-600 transition-colors"
+                  className="flex items-center space-x-2 text-gray-700 hover:text-[#78C841] transition-colors"
                 >
                   <User className="w-5 h-5" />
                   <span>{user.firstName}</span>
@@ -117,9 +116,9 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                   key={item.name}
                   to={item.href}
                   className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
-                    isActive(item.href)
-                      ? 'text-orange-600 bg-orange-50'
-                      : 'text-gray-700 hover:text-orange-600 hover:bg-orange-50'
+                                      isActive(item.href)
+                    ? 'text-[#78C841] bg-[#78C841]/10'
+                    : 'text-gray-700 hover:text-[#78C841] hover:bg-[#78C841]/10'
                   }`}
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
@@ -133,7 +132,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                   <div className="space-y-2">
                     <Link
                       to="/profile"
-                      className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
+                      className="flex items-center space-x-2 px-3 py-2 text-gray-700 hover:text-[#78C841] transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       <User className="w-5 h-5" />
@@ -141,7 +140,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                     </Link>
                     <button
                       onClick={handleLogout}
-                      className="flex items-center space-x-2 w-full px-3 py-2 text-left text-gray-700 hover:text-orange-600 transition-colors"
+                      className="flex items-center space-x-2 w-full px-3 py-2 text-left text-gray-700 hover:text-[#78C841] transition-colors"
                     >
                       <LogOut className="w-5 h-5" />
                       <span>Logout</span>
@@ -151,7 +150,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                   <div className="space-y-2">
                     <Link
                       to="/login"
-                      className="block px-3 py-2 text-gray-700 hover:text-orange-600 transition-colors"
+                      className="block px-3 py-2 text-gray-700 hover:text-[#78C841] transition-colors"
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
                       Sign In
@@ -161,7 +160,7 @@ export default function Header({ onJoinUsClick }: HeaderProps) {
                         onJoinUsClick();
                         setIsMobileMenuOpen(false);
                       }}
-                      className="block w-full text-left px-3 py-2 text-orange-600 hover:text-orange-700 transition-colors"
+                      className="block w-full text-left px-3 py-2 text-[#78C841] hover:text-[#6bb03a] transition-colors"
                     >
                       Join Us
                     </button>

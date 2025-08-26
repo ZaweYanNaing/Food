@@ -1,5 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { apiService, Recipe } from '../services/api';
+import { apiService } from '../services/api';
+
+interface Recipe {
+  id: number;
+  title: string;
+  description: string;
+  ingredients: string;
+  difficulty: string;
+  cooking_time: number;
+  created_at: string;
+}
 
 const RecipeList: React.FC = () => {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
@@ -19,7 +29,7 @@ const RecipeList: React.FC = () => {
       if (response.success && response.data) {
         setRecipes(response.data);
       } else {
-        setError(response.error || 'Failed to fetch recipes');
+        setError(response.message || 'Failed to fetch recipes');
       }
     } catch (err) {
       setError('Network error occurred');
@@ -41,7 +51,7 @@ const RecipeList: React.FC = () => {
       if (response.success && response.data) {
         setRecipes(response.data);
       } else {
-        setError(response.error || 'Search failed');
+        setError(response.message || 'Search failed');
       }
     } catch (err) {
       setError('Search error occurred');
@@ -60,7 +70,7 @@ const RecipeList: React.FC = () => {
         Error: {error}
         <button 
           onClick={fetchRecipes}
-          className="ml-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+          className="ml-4 px-4 py-2 bg-[#78C841] text-white rounded hover:bg-[#6bb03a]"
         >
           Retry
         </button>
@@ -80,12 +90,12 @@ const RecipeList: React.FC = () => {
             placeholder="Search recipes..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841]"
             onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
           />
           <button
             onClick={handleSearch}
-            className="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-6 py-2 bg-[#78C841] text-white rounded-lg hover:bg-[#6bb03a] transition-colors"
           >
             Search
           </button>
@@ -113,9 +123,9 @@ const RecipeList: React.FC = () => {
                 
                 <div className="flex items-center justify-between mb-4">
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    recipe.difficulty === 'Easy' ? 'bg-green-100 text-green-800' :
-                    recipe.difficulty === 'Medium' ? 'bg-yellow-100 text-yellow-800' :
-                    'bg-red-100 text-red-800'
+                    recipe.difficulty === 'Easy' ? 'bg-[#78C841]/20 text-[#78C841]' :
+                    recipe.difficulty === 'Medium' ? 'bg-[#FF9B2F]/20 text-[#FF9B2F]' :
+                    'bg-[#FB4141]/20 text-[#FB4141]'
                   }`}>
                     {recipe.difficulty}
                   </span>

@@ -4,21 +4,22 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-orange-500 focus-visible:ring-offset-2",
+  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium transition-all disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg:not([class*='size-'])]:size-4 shrink-0 [&_svg]:shrink-0 outline-none focus-visible:ring-2 focus-visible:ring-[#78C841] focus-visible:ring-offset-2",
   {
     variants: {
       variant: {
         default:
-          "bg-orange-600 text-white shadow-sm hover:bg-orange-700 focus-visible:ring-orange-500",
+          "bg-[#78C841] text-white shadow-sm hover:bg-[#6bb03a] focus-visible:ring-[#78C841]",
         destructive:
-          "bg-red-600 text-white shadow-sm hover:bg-red-700 focus-visible:ring-red-500",
+          "bg-[#FB4141] text-white shadow-sm hover:bg-[#e63a3a] focus-visible:ring-[#FB4141]",
         outline:
-          "border border-gray-300 bg-background shadow-sm hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-orange-500",
+          "border border-gray-300 bg-background shadow-sm hover:bg-gray-50 hover:text-gray-900 focus-visible:ring-[#78C841]",
         secondary:
-          "bg-gray-100 text-gray-900 shadow-sm hover:bg-gray-200 focus-visible:ring-orange-500",
+          "bg-[#B4E50D] text-gray-900 shadow-sm hover:bg-[#a3d40c] focus-visible:ring-[#B4E50D]",
         ghost:
-          "hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-orange-500",
-        link: "text-orange-600 underline-offset-4 hover:underline focus-visible:ring-orange-500",
+          "hover:bg-gray-100 hover:text-gray-900 focus-visible:ring-[#78C841]",
+        link: "text-[#78C841] underline-offset-4 hover:underline focus-visible:ring-[#78C841]",
+        accent: "bg-[#FF9B2F] text-white shadow-sm hover:bg-[#e88a28] focus-visible:ring-[#FF9B2F]",
       },
       size: {
         default: "h-9 px-4 py-2",

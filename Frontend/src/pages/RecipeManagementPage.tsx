@@ -160,7 +160,7 @@ export default function RecipeManagementPage() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case 'Easy': return 'bg-green-100 text-green-800';
+              case 'Easy': return 'bg-[#78C841]/20 text-[#78C841]';
       case 'Medium': return 'bg-yellow-100 text-yellow-800';
       case 'Hard': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -171,7 +171,7 @@ export default function RecipeManagementPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto"></div>
+                          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#78C841] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading recipes...</p>
         </div>
       </div>
@@ -189,7 +189,7 @@ export default function RecipeManagementPage() {
               <p className="mt-2 text-gray-600">Create, edit, and manage your recipes</p>
             </div>
             <Button 
-              className="bg-orange-600 hover:bg-orange-700"
+              className="bg-[#78C841] hover:bg-[#6bb03a]"
               onClick={handleCreateRecipe}
             >
               <Plus className="w-4 h-4 mr-2" />
@@ -226,7 +226,7 @@ export default function RecipeManagementPage() {
             </Button>
 
             {/* Search Button */}
-            <Button onClick={handleSearch} className="bg-orange-600 hover:bg-orange-700">
+            <Button onClick={handleSearch} className="bg-[#78C841] hover:bg-[#6bb03a]">
               Search
             </Button>
           </div>
@@ -358,7 +358,7 @@ export default function RecipeManagementPage() {
                         {recipe.categories.slice(0, 3).map((category, index) => (
                           <span
                             key={index}
-                            className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded-full"
+                            className="px-2 py-1 bg-[#78C841]/20 text-[#78C841] text-xs rounded-full"
                           >
                             {category}
                           </span>
@@ -455,7 +455,7 @@ export default function RecipeManagementPage() {
               {/* Recipe Details */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">
+                  <div className="text-2xl font-bold text-[#78C841]">
                     {formatCookingTime(selectedRecipe.cooking_time)}
                   </div>
                   <div className="text-sm text-gray-600">Cooking Time</div>

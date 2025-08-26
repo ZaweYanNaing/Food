@@ -221,7 +221,7 @@ export default function CommunityCookbookPage() {
 
   const getDifficultyColor = (level: string) => {
     switch (level) {
-      case 'easy': return 'bg-green-100 text-green-800';
+              case 'easy': return 'bg-blue-100 text-blue-800';
       case 'medium': return 'bg-yellow-100 text-yellow-800';
       case 'hard': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -231,7 +231,7 @@ export default function CommunityCookbookPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-50 to-red-50 py-16">
+      <section className="bg-gradient-to-br from-emerald-100 to-Teal-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-6">
             Community Cookbook

@@ -101,7 +101,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-50 to-red-50 py-20">
+      <section className="bg-gradient-to-br from-emerald-100 to-Teal-100 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             About FoodFusion
@@ -144,7 +144,7 @@ export default function AboutPage() {
                 alt="Cooking together"
                 className="rounded-lg shadow-lg"
               />
-              <div className="absolute -bottom-6 -right-6 bg-orange-600 text-white p-4 rounded-lg">
+              <div className="absolute -bottom-6 -right-6 bg-[#78C841] text-white p-4 rounded-lg">
                 <p className="text-sm font-semibold">Since 2020</p>
                 <p className="text-xs">Building community through food</p>
               </div>
@@ -169,8 +169,8 @@ export default function AboutPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {values.map((value, index) => (
               <div key={index} className="bg-white p-6 rounded-lg shadow-md text-center">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <value.icon className="w-8 h-8 text-orange-600" />
+                <div className="w-16 h-16 bg-[#78C841]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <value.icon className="w-8 h-8 text-[#78C841]" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">{value.title}</h3>
                 <p className="text-gray-600">{value.description}</p>
@@ -203,13 +203,13 @@ export default function AboutPage() {
                 />
                 <div className="p-6">
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">{member.name}</h3>
-                  <p className="text-orange-600 font-medium mb-3">{member.role}</p>
+                  <p className="text-[#78C841] font-medium mb-3">{member.role}</p>
                   <p className="text-gray-600 text-sm mb-4">{member.bio}</p>
                   <div className="space-y-1">
                     {member.specialties.map((specialty, idx) => (
                       <span 
                         key={idx}
-                        className="inline-block bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded-full mr-2 mb-1"
+                        className="inline-block bg-[#B4E50D]/20 text-[#B4E50D] text-xs px-2 py-1 rounded-full mr-2 mb-1"
                       >
                         {specialty}
                       </span>
@@ -237,7 +237,7 @@ export default function AboutPage() {
           
           <div className="relative">
             {/* Timeline line */}
-            <div className="absolute left-1/2 transform -translate-x-px w-0.5 h-full bg-orange-200"></div>
+            <div className="absolute left-1/2 transform -translate-x-px w-0.5 h-full bg-[#78C841]/30"></div>
             
             <div className="space-y-12">
               {milestones.map((milestone, index) => (
@@ -245,12 +245,12 @@ export default function AboutPage() {
                   index % 2 === 0 ? 'flex-row' : 'flex-row-reverse'
                 }`}>
                   {/* Timeline dot */}
-                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-orange-600 rounded-full border-4 border-white shadow-lg"></div>
+                  <div className="absolute left-1/2 transform -translate-x-1/2 w-4 h-4 bg-[#78C841] rounded-full border-4 border-white shadow-lg"></div>
                   
                   {/* Content */}
                   <div className={`w-5/12 ${index % 2 === 0 ? 'pr-8 text-right' : 'pl-8 text-left'}`}>
                     <div className="bg-white p-6 rounded-lg shadow-md">
-                      <div className="text-2xl font-bold text-orange-600 mb-2">{milestone.year}</div>
+                      <div className="text-2xl font-bold text-[#78C841] mb-2">{milestone.year}</div>
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">{milestone.title}</h3>
                       <p className="text-gray-600">{milestone.description}</p>
                     </div>
@@ -263,20 +263,20 @@ export default function AboutPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 bg-orange-600">
+      <section className="py-16 bg-[#78C841]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Join Our Community
           </h2>
-          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Be part of the FoodFusion family and help us continue building the world's 
             most vibrant culinary community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button className="bg-white text-orange-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+            <button className="bg-white text-[#78C841] px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
               Get Started Today
             </button>
-            <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-orange-600 transition-colors">
+            <button className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-[#78C841] transition-colors">
               Learn More
             </button>
           </div>

@@ -157,7 +157,7 @@ export default function EducationalResourcesPage() {
     switch (type) {
       case 'video': return 'bg-red-100 text-red-800';
       case 'pdf': return 'bg-blue-100 text-blue-800';
-      case 'infographic': return 'bg-green-100 text-green-800';
+              case 'infographic': return 'bg-[#78C841]/20 text-[#78C841]';
       case 'presentation': return 'bg-purple-100 text-purple-800';
       case 'worksheet': return 'bg-orange-100 text-orange-800';
       default: return 'bg-gray-100 text-gray-800';
@@ -166,7 +166,7 @@ export default function EducationalResourcesPage() {
 
   const getGradeLevelColor = (level: string) => {
     switch (level) {
-      case 'elementary': return 'bg-green-100 text-green-800';
+              case 'elementary': return 'bg-[#B4E50D]/20 text-[#B4E50D]';
       case 'middle': return 'bg-blue-100 text-blue-800';
       case 'high': return 'bg-purple-100 text-purple-800';
       case 'adult': return 'bg-gray-100 text-gray-800';
@@ -192,7 +192,7 @@ export default function EducationalResourcesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-green-50 to-blue-50 py-16">
+              <section className="bg-gradient-to-br from-emerald-100 to-Teal py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
             Educational Resources
@@ -248,8 +248,8 @@ export default function EducationalResourcesPage() {
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <BookOpen className="w-8 h-8 text-green-600" />
+              <div className="w-16 h-16 bg-[#78C841]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <BookOpen className="w-8 h-8 text-[#78C841]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Hydropower</h3>
               <p className="text-gray-600 text-sm">
@@ -330,7 +330,7 @@ export default function EducationalResourcesPage() {
             <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Featured Resources</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
               {filteredResources.filter(r => r.isFeatured).map((resource) => (
-                <article key={resource.id} className="bg-gradient-to-br from-green-50 to-blue-50 rounded-lg shadow-lg overflow-hidden border-2 border-green-200">
+                <article key={resource.id} className="bg-gradient-to-br from-[#78C841]/10 to-[#B4E50D]/10 rounded-lg shadow-lg overflow-hidden border-2 border-[#78C841]/30">
                   <div className="relative">
                     <img 
                       src={resource.imageUrl} 
@@ -338,7 +338,7 @@ export default function EducationalResourcesPage() {
                       className="w-full h-48 object-cover"
                     />
                     <div className="absolute top-3 left-3">
-                      <span className="px-2 py-1 bg-green-600 text-white text-xs font-medium rounded-full">
+                      <span className="px-2 py-1 bg-[#78C841] text-white text-xs font-medium rounded-full">
                         Featured
                       </span>
                     </div>
@@ -367,7 +367,7 @@ export default function EducationalResourcesPage() {
                       {resource.tags.slice(0, 3).map((tag, index) => (
                         <span 
                           key={index}
-                          className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-[#78C841]/20 text-[#78C841] text-xs rounded-full"
                         >
                           {tag}
                         </span>
@@ -384,7 +384,7 @@ export default function EducationalResourcesPage() {
                     
                     <Button 
                       onClick={() => handleDownload(resource)}
-                      className="w-full bg-green-600 hover:bg-green-700"
+                      className="w-full bg-[#78C841] hover:bg-[#6bb03a]"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download Now
@@ -455,7 +455,7 @@ export default function EducationalResourcesPage() {
                       {resource.tags.slice(0, 2).map((tag, index) => (
                         <span 
                           key={index}
-                          className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full"
+                          className="px-2 py-1 bg-[#B4E50D]/20 text-[#B4E50D] text-xs rounded-full"
                         >
                           {tag}
                         </span>
@@ -473,7 +473,7 @@ export default function EducationalResourcesPage() {
                     <Button 
                       onClick={() => handleDownload(resource)}
                       variant="outline"
-                      className="w-full border-green-300 text-green-700 hover:bg-green-50"
+                      className="w-full border-[#78C841]/50 text-[#78C841] hover:bg-[#78C841]/10"
                     >
                       <Download className="w-4 h-4 mr-2" />
                       Download
@@ -487,20 +487,20 @@ export default function EducationalResourcesPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 bg-green-600">
+      <section className="py-16 bg-[#78C841]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Help Us Educate the Next Generation
           </h2>
-          <p className="text-xl text-green-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Are you an educator or expert in renewable energy? We're always looking for 
             quality educational content to share with our community.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" size="lg" className="bg-white text-green-600 hover:bg-gray-100">
+            <Button variant="outline" size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
               Submit Educational Content
             </Button>
-            <Button size="lg" className="bg-white text-green-600 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
               Request Specific Topics
             </Button>
           </div>

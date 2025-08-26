@@ -102,11 +102,11 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
-      <section className="relative bg-gradient-to-br from-orange-50 to-red-50 py-20">
+      <section className="relative bg-gradient-to-br from-emerald-100 to-Teal-100 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
             Welcome to{' '}
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-600 to-red-600">
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-500 to-green-600">
               FoodFusion
             </span>
           </h1>
@@ -143,7 +143,7 @@ export default function HomePage() {
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#78C841]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🍳</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Learn & Grow</h3>
@@ -152,7 +152,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#B4E50D]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">👥</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Connect & Share</h3>
@@ -161,7 +161,7 @@ export default function HomePage() {
               </p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div className="w-16 h-16 bg-[#FF9B2F]/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">🌟</span>
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Discover & Inspire</h3>
@@ -190,8 +190,8 @@ export default function HomePage() {
                 <div className="p-6">
                   <div className="flex items-center mb-2">
                     <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      item.type === 'recipe_feature' ? 'bg-green-100 text-green-800' :
-                      item.type === 'cooking_tip' ? 'bg-blue-100 text-blue-800' :
+                      item.type === 'recipe_feature' ? 'bg-[#78C841]/20 text-[#78C841]' :
+                      item.type === 'cooking_tip' ? 'bg-[#B4E50D]/20 text-[#B4E50D]' :
                       item.type === 'event_announcement' ? 'bg-purple-100 text-purple-800' :
                       'bg-gray-100 text-gray-800'
                     }`}>
@@ -238,7 +238,7 @@ export default function HomePage() {
                           
                           <div className="space-y-3 mb-6">
                             <div className="flex items-center text-gray-700">
-                              <Calendar className="w-5 h-5 mr-3 text-orange-600" />
+                              <Calendar className="w-5 h-5 mr-3 text-[#78C841]" />
                               <span>{new Date(event.date).toLocaleDateString('en-US', { 
                                 weekday: 'long', 
                                 year: 'numeric', 
@@ -247,11 +247,11 @@ export default function HomePage() {
                               })}</span>
                             </div>
                             <div className="flex items-center text-gray-700">
-                              <MapPin className="w-5 h-5 mr-3 text-orange-600" />
+                              <MapPin className="w-5 h-5 mr-3 text-[#B4E50D]" />
                               <span>{event.location}</span>
                             </div>
                             <div className="flex items-center text-gray-700">
-                              <Users className="w-5 h-5 mr-3 text-orange-600" />
+                              <Users className="w-5 h-5 mr-3 text-[#FF9B2F]" />
                               <span>{event.currentParticipants}/{event.maxParticipants} participants</span>
                             </div>
                           </div>
@@ -288,7 +288,7 @@ export default function HomePage() {
                   key={index}
                   onClick={() => setCurrentEventIndex(index)}
                   className={`w-3 h-3 rounded-full transition-colors ${
-                    index === currentEventIndex ? 'bg-orange-600' : 'bg-gray-300'
+                    index === currentEventIndex ? 'bg-[#78C841]' : 'bg-gray-300'
                   }`}
                 />
               ))}

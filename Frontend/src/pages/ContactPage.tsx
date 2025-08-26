@@ -67,30 +67,30 @@ export default function ContactPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 bg-[#78C841]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Mail className="w-8 h-8 text-[#78C841]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Email Us</h3>
               <p className="text-gray-600 mb-2">We typically respond within 24 hours</p>
-              <a href="mailto:contact@foodfusion.com" className="text-orange-600 hover:text-orange-700 font-medium">
+              <a href="mailto:contact@foodfusion.com" className="text-[#78C841] hover:text-[#6bb03a] font-medium">
                 contact@foodfusion.com
               </a>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 bg-[#B4E50D]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Phone className="w-8 h-8 text-[#B4E50D]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Call Us</h3>
               <p className="text-gray-600 mb-2">Monday - Friday, 9 AM - 6 PM EST</p>
-              <a href="tel:+1-555-123-4567" className="text-orange-600 hover:text-orange-700 font-medium">
+              <a href="tel:+1-555-123-4567" className="text-[#B4E50D] hover:text-[#a3d40c] font-medium">
                 +1 (555) 123-4567
               </a>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-orange-600" />
+              <div className="w-16 h-16 bg-[#FF9B2F]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <MapPin className="w-8 h-8 text-[#FF9B2F]" />
               </div>
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Visit Us</h3>
               <p className="text-gray-600 mb-2">FoodFusion Headquarters</p>
@@ -137,7 +137,7 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
                     placeholder="Enter your full name"
                   />
                 </div>
@@ -153,7 +153,7 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
                     placeholder="Enter your email address"
                   />
                 </div>
@@ -163,14 +163,14 @@ export default function ContactPage() {
                 <label htmlFor="contactType" className="block text-sm font-medium text-gray-700 mb-2">
                   Contact Type *
                 </label>
-                <select
-                  id="contactType"
-                  name="contactType"
-                  value={formData.contactType}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                >
+                                  <select
+                    id="contactType"
+                    name="contactType"
+                    value={formData.contactType}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
+                  >
                   {contactTypes.map((type) => (
                     <option key={type.value} value={type.value}>
                       {type.label}
@@ -183,32 +183,32 @@ export default function ContactPage() {
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                   Subject *
                 </label>
-                <input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleInputChange}
-                  required
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Brief description of your inquiry"
-                />
+                                  <input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    value={formData.subject}
+                    onChange={handleInputChange}
+                    required
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
+                    placeholder="Brief description of your inquiry"
+                  />
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                   Message *
                 </label>
-                <textarea
-                  id="message"
-                  name="message"
-                  value={formData.message}
-                  onChange={handleInputChange}
-                  required
-                  rows={6}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Please provide details about your inquiry, recipe request, or feedback..."
-                />
+                                  <textarea
+                    id="message"
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
+                    rows={6}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
+                    placeholder="Please provide details about your inquiry, recipe request, or feedback..."
+                  />
               </div>
 
               <div className="text-center">
@@ -286,20 +286,20 @@ export default function ContactPage() {
       </section>
 
       {/* Call to Action */}
-      <section className="py-16 bg-orange-600">
+      <section className="py-16 bg-[#78C841]">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
             Join Our Community
           </h2>
-          <p className="text-xl text-orange-100 mb-8 max-w-2xl mx-auto">
+          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
             Don't just browse recipes - become part of our growing community of food lovers, 
             share your knowledge, and discover new culinary adventures.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+            <Button variant="outline" size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
               Sign Up Now
             </Button>
-            <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+            <Button size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
               Explore Recipes
             </Button>
           </div>
