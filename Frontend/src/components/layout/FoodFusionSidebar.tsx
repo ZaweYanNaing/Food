@@ -22,13 +22,9 @@ import {
   SidebarFooter,
   SidebarHeader,
   SidebarRail,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { useAuth } from "../../contexts/AuthContext"
 import { useLocation } from "react-router-dom"
-import { Link } from "react-router-dom"
 
 interface FoodFusionSidebarProps extends React.ComponentProps<typeof Sidebar> {
   onJoinUsClick?: () => void;
@@ -84,6 +80,23 @@ export function FoodFusionSidebar({ onJoinUsClick, ...props }: FoodFusionSidebar
     },
   ];
 
+  // Authentication navigation items - only show when not logged in
+  const authNavItems = !user ? [
+    {
+      title: "Sign In",
+      url: "/login",
+      icon: LogIn,
+      isActive: location.pathname === "/login",
+    },
+    {
+      title: "Join Us",
+      url: "#", // This will be handled by onClick
+      icon: UserPlus,
+      isActive: false,
+      onClick: onJoinUsClick,
+    },
+  ] : [];
+
   // User data
   const userData = {
     name: user ? `${user.firstName} ${user.lastName}` : "Guest",
@@ -105,32 +118,14 @@ export function FoodFusionSidebar({ onJoinUsClick, ...props }: FoodFusionSidebar
         
         {/* Authentication Navigation Items - only show when not logged in */}
         {!user && (
-          <div className="mt-4">
-            <div className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/70 uppercase tracking-wider">
-              Account
-            </div>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link to="/login">
-                    <LogIn className="w-4 h-4" />
-                    <span>Sign In</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild onClick={onJoinUsClick}>
-                  <button className="w-full text-left">
-                    <UserPlus className="w-4 h-4" />
-                    <span>Join Us</span>
-                  </button>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
+          <div className="mt-10">
+            <NavMain items={authNavItems} />
           </div>
         )}
       </SidebarContent>
       <SidebarFooter>
+
+     
         {user && <NavUser user={userData} onLogout={handleLogout} />}
       </SidebarFooter>
       <SidebarRail />
