@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Heart, Clock, ChefHat, User, Trash2 } from 'lucide-react';
+import { Heart, Clock, User, Trash2, RefreshCw } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import { toast } from 'react-toastify';
 
 interface FavoriteRecipe {
   id: number;
@@ -31,6 +32,16 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
     loadUserFavorites();
   }, [userId]);
 
+  // Refresh favorites when user returns to the page
+  useEffect(() => {
+    const handleFocus = () => {
+      loadUserFavorites();
+    };
+
+    window.addEventListener('focus', handleFocus);
+    return () => window.removeEventListener('focus', handleFocus);
+  }, []);
+
   const loadUserFavorites = async () => {
     try {
       setIsLoading(true);
@@ -38,7 +49,20 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
       const response = await apiService.getUserFavorites(userId);
       
       if (response.success && response.data) {
-        setFavorites(response.data);
+        // Remove duplicates by recipe ID to prevent showing the same recipe multiple times
+        const uniqueFavorites = response.data.filter((recipe: any, index: number, self: any[]) => 
+          index === self.findIndex((r: any) => r.id === recipe.id)
+        );
+        
+        // Log for debugging
+        if (uniqueFavorites.length !== response.data.length) {
+          console.warn(`Removed ${response.data.length - uniqueFavorites.length} duplicate favorites`);
+          console.warn('Duplicate recipe IDs:', response.data.filter((recipe: any, index: number, self: any[]) => 
+            index !== self.findIndex((r: any) => r.id === recipe.id)
+          ).map((r: any) => r.id));
+        }
+        
+        setFavorites(uniqueFavorites);
       } else {
         setError('Failed to load favorites');
       }
@@ -60,6 +84,21 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove from favorites');
+    }
+  };
+
+  const handleCleanupDuplicates = async () => {
+    try {
+      const response = await apiService.cleanupDuplicateFavorites(userId);
+      if (response.success) {
+        toast.success(response.message || 'Duplicates cleaned up successfully');
+        // Reload favorites to show the cleaned up list
+        await loadUserFavorites();
+      } else {
+        toast.error(response.message || 'Failed to clean up duplicates');
+      }
+    } catch (err) {
+      toast.error('Failed to clean up duplicates');
     }
   };
 
@@ -116,8 +155,28 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-bold text-gray-900">My Favorite Recipes</h2>
-        <div className="text-sm text-gray-500">
-          {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
+        <div className="flex items-center space-x-4">
+          <div className="text-sm text-gray-500">
+            {favorites.length} favorite{favorites.length !== 1 ? 's' : ''}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadUserFavorites}
+            className="flex items-center space-x-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Refresh
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCleanupDuplicates}
+            className="flex items-center space-x-2 text-orange-600 border-orange-300 hover:bg-orange-50"
+          >
+            <Trash2 className="w-4 h-4" />
+            Clean Duplicates
+          </Button>
         </div>
       </div>
 

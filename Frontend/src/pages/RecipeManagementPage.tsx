@@ -1,10 +1,16 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, Eye } from 'lucide-react';
+import { Plus, Edit, Trash2, Search, Filter, Eye, Heart } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import { toast } from 'react-toastify';
 import RecipeForm from '../components/RecipeForm';
+
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
 
 interface Recipe {
   id: number;
@@ -44,11 +50,15 @@ export default function RecipeManagementPage() {
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
+  const [favoriteRecipes, setFavoriteRecipes] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     loadRecipes();
     loadCategories();
-  }, []);
+    if (user) {
+      loadUserFavorites();
+    }
+  }, [user]);
 
   const loadRecipes = async () => {
     try {
@@ -74,6 +84,20 @@ export default function RecipeManagementPage() {
       }
     } catch (error) {
       console.error('Error loading categories:', error);
+    }
+  };
+
+  const loadUserFavorites = async () => {
+    if (!user) return;
+    
+    try {
+      const response = await apiService.getUserFavorites(user.id);
+      if (response.success && response.data) {
+        const favoriteIds = new Set<number>(response.data.map((fav: any) => Number(fav.id)));
+        setFavoriteRecipes(favoriteIds);
+      }
+    } catch (error) {
+      console.error('Error loading user favorites:', error);
     }
   };
 
@@ -120,6 +144,34 @@ export default function RecipeManagementPage() {
       }
     } catch (error) {
       toast.error('Error deleting recipe');
+    }
+  };
+
+  const handleToggleFavorite = async (recipeId: number) => {
+    if (!user) {
+      toast.error('You must be logged in to add favorites');
+      return;
+    }
+    
+    try {
+      const response = await apiService.toggleFavorite(user.id, recipeId);
+      if (response.success) {
+        setFavoriteRecipes(prev => {
+          const newSet = new Set(prev);
+          if (newSet.has(recipeId)) {
+            newSet.delete(recipeId);
+            toast.success('Removed from favorites');
+          } else {
+            newSet.add(recipeId);
+            toast.success('Added to favorites');
+          }
+          return newSet;
+        });
+      } else {
+        toast.error(response.message || 'Failed to update favorite');
+      }
+    } catch (error) {
+      toast.error('Error updating favorite');
     }
   };
 
@@ -323,13 +375,42 @@ export default function RecipeManagementPage() {
                 {/* Recipe Content */}
                 <div className="p-6">
                   {/* Title and Author */}
-                  <div className="mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
-                      {recipe.title}
-                    </h3>
-                    <p className="text-sm text-gray-600">
-                      by {recipe.firstName} {recipe.lastName}
-                    </p>
+                  <div className="mb-3  flex justify-between items-center">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-1 line-clamp-2">
+                        {recipe.title}
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        by {recipe.firstName} {recipe.lastName}
+                      </p>
+                    </div>
+
+                    {/* Favorite Button */}
+                    {user && (
+                      <Tooltip>
+                        <TooltipTrigger>
+                        <Button
+                          variant="ghost"
+                          size="lg"
+                          onClick={() => handleToggleFavorite(recipe.id)}
+                          className={`h-10 w-10 p-0 cursor-pointer ${
+                            favoriteRecipes.has(recipe.id)
+                              ? 'text-red-500 hover:text-red-700'
+                              : 'text-gray-400 hover:text-red-500'
+                          }`}
+                        >
+                          <Heart 
+                            className={`w-4 h-4 ${
+                              favoriteRecipes.has(recipe.id) ? 'fill-current' : ''
+                            }`}
+                          />
+                        </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          {favoriteRecipes.has(recipe.id) ? 'Remove from favorites' : 'Add to favorites'}
+                        </TooltipContent>
+                      </Tooltip>
+                      )}
                   </div>
 
                   {/* Description */}
@@ -384,6 +465,8 @@ export default function RecipeManagementPage() {
                         View
                       </Button>
                       
+                     
+                      
                       {user && recipe.user_id === user.id && (
                         <>
                           <Button 
@@ -395,13 +478,12 @@ export default function RecipeManagementPage() {
                             Edit
                           </Button>
                           <Button
-                            variant="outline"
+                            variant="ghost"
                             size="sm"
                             onClick={() => handleDeleteRecipe(recipe.id)}
-                            className="text-red-600 hover:text-red-700 border-red-300 hover:border-red-400"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
                           >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            Delete
+                            <Trash2 className="w-4 h-4" />
                           </Button>
                         </>
                       )}
@@ -433,12 +515,33 @@ export default function RecipeManagementPage() {
             <div className="p-6">
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-2xl font-bold text-gray-900">{selectedRecipe.title}</h2>
-                <button
-                  onClick={() => setShowRecipeModal(false)}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
+                <div className="flex items-center space-x-2">
+                  {/* Favorite Button in Modal */}
+                  {user && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleToggleFavorite(selectedRecipe.id)}
+                      className={`h-10 w-10 p-0 ${
+                        favoriteRecipes.has(selectedRecipe.id)
+                          ? 'text-red-500 hover:text-red-700'
+                          : 'text-gray-400 hover:text-red-500'
+                      }`}
+                    >
+                      <Heart 
+                        className={`w-5 h-5 ${
+                          favoriteRecipes.has(selectedRecipe.id) ? 'fill-current' : ''
+                        }`}
+                      />
+                    </Button>
+                  )}
+                  <button
+                    onClick={() => setShowRecipeModal(false)}
+                    className="text-gray-400 hover:text-gray-600"
+                  >
+                    ✕
+                  </button>
+                </div>
               </div>
 
               {/* Recipe Image */}

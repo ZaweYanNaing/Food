@@ -56,7 +56,9 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
       case 'recipe_liked':
         return <Heart className="w-5 h-5 text-red-500" />;
       case 'recipe_favorited':
-        return <Heart className="w-5 h-5 text-pink-500" />;
+        return <Heart className="w-5 h-5 text-pink-500 fill-current" />;
+      case 'recipe_unfavorited':
+        return <Heart className="w-5 h-5 text-gray-500" />;
       case 'recipe_shared':
         return <Share2 className="w-5 h-5 text-blue-500" />;
       case 'resource_downloaded':
@@ -76,6 +78,8 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         return 'bg-red-100';
       case 'recipe_favorited':
         return 'bg-pink-100';
+      case 'recipe_unfavorited':
+        return 'bg-gray-100';
       case 'recipe_shared':
         return 'bg-blue-100';
       case 'resource_downloaded':
@@ -95,6 +99,8 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         return `Liked recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_favorited':
         return `Added "${activity.target_title || 'Untitled'}" to favorites`;
+      case 'recipe_unfavorited':
+        return `Removed "${activity.target_title || 'Untitled'}" from favorites`;
       case 'recipe_shared':
         return `Shared recipe "${activity.target_title || 'Untitled'}"`;
       case 'resource_downloaded':

@@ -342,6 +342,17 @@ try {
             }
             break;
             
+        case '/users/favorites/cleanup':
+            if ($method === 'POST') {
+                $controller = new UserController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? 1; // Mock user ID for now
+                
+                $result = $controller->cleanupDuplicateFavorites($userId);
+                echo json_encode($result);
+            }
+            break;
+            
         default:
             http_response_code(404);
             echo json_encode(['error' => 'Endpoint not found']);

@@ -326,12 +326,13 @@ class UserController {
     
     public function getUserFavorites($userId) {
         try {
-            $query = "SELECT r.*, u.firstName, u.lastName, c.name as category_name 
+            // First get the basic recipe information without categories to avoid duplicates
+            $query = "SELECT DISTINCT r.id, r.title, r.description, r.ingredients, r.instructions, 
+                             r.cooking_time, r.difficulty, r.image_url, r.user_id, r.created_at,
+                             u.firstName, u.lastName, uf.created_at as favorited_at
                       FROM user_favorites uf 
                       JOIN recipes r ON uf.recipe_id = r.id 
                       JOIN users u ON r.user_id = u.id 
-                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id 
-                      LEFT JOIN categories c ON rc.category_id = c.id 
                       WHERE uf.user_id = :user_id 
                       ORDER BY uf.created_at DESC";
             $stmt = $this->db->prepare($query);
@@ -339,6 +340,22 @@ class UserController {
             $stmt->execute();
             
             $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Now get categories for each recipe separately to avoid duplication
+            foreach ($favorites as &$favorite) {
+                $categoryQuery = "SELECT c.name 
+                                 FROM recipe_categories rc 
+                                 JOIN categories c ON rc.category_id = c.id 
+                                 WHERE rc.recipe_id = :recipe_id";
+                $categoryStmt = $this->db->prepare($categoryQuery);
+                $categoryStmt->bindParam(':recipe_id', $favorite['id']);
+                $categoryStmt->execute();
+                
+                $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+                $favorite['categories'] = array_column($categories, 'name');
+                $favorite['category_name'] = !empty($categories) ? $categories[0]['name'] : null;
+            }
+            
             return ['success' => true, 'data' => $favorites];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -392,12 +409,12 @@ class UserController {
                 $stmt->bindParam(':recipe_id', $recipeId);
                 
                 if ($stmt->execute()) {
-                    $this->logUserActivity($userId, 'recipe_favorited', $recipeId, 'recipe', 'Removed recipe from favorites');
+                    $this->logUserActivity($userId, 'recipe_unfavorited', $recipeId, 'recipe', 'Removed recipe from favorites');
                     return ['success' => true, 'message' => 'Recipe removed from favorites', 'isFavorited' => false];
                 }
             } else {
-                // Add to favorites
-                $query = "INSERT INTO user_favorites (user_id, recipe_id) VALUES (:user_id, :recipe_id)";
+                // Add to favorites - use INSERT IGNORE to handle any potential duplicates gracefully
+                $query = "INSERT IGNORE INTO user_favorites (user_id, recipe_id) VALUES (:user_id, :recipe_id)";
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':user_id', $userId);
                 $stmt->bindParam(':recipe_id', $recipeId);
@@ -409,6 +426,29 @@ class UserController {
             }
             
             return ['success' => false, 'error' => 'Failed to update favorites'];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function cleanupDuplicateFavorites($userId) {
+        try {
+            // Remove duplicate favorites for the user
+            $query = "DELETE uf1 FROM user_favorites uf1
+                      INNER JOIN user_favorites uf2 
+                      WHERE uf1.id > uf2.id 
+                      AND uf1.user_id = uf2.user_id 
+                      AND uf1.recipe_id = uf2.recipe_id 
+                      AND uf1.user_id = :user_id";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            
+            if ($stmt->execute()) {
+                $deletedCount = $stmt->rowCount();
+                return ['success' => true, 'message' => "Cleaned up $deletedCount duplicate favorites", 'deletedCount' => $deletedCount];
+            } else {
+                return ['success' => false, 'error' => 'Failed to clean up duplicates'];
+            }
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }

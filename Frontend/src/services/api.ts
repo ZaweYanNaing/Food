@@ -140,6 +140,13 @@ class ApiService {
     });
   }
 
+  async cleanupDuplicateFavorites(userId: number): Promise<ApiResponse> {
+    return this.request('/users/favorites/cleanup', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
   // Recipe endpoints
   async getRecipes(filters?: {
     category?: number;

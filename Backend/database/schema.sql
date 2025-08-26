@@ -66,7 +66,7 @@ CREATE TABLE IF NOT EXISTS user_favorites (
 CREATE TABLE IF NOT EXISTS user_activity (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
-    activity_type ENUM('recipe_created', 'recipe_liked', 'recipe_favorited', 'recipe_shared', 'resource_downloaded', 'profile_updated') NOT NULL,
+    activity_type ENUM('recipe_created', 'recipe_liked', 'recipe_favorited', 'recipe_unfavorited', 'recipe_shared', 'resource_downloaded', 'profile_updated') NOT NULL,
     target_id INT,
     target_type ENUM('recipe', 'resource', 'profile') NOT NULL,
     description TEXT,
