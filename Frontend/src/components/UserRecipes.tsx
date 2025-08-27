@@ -3,14 +3,21 @@ import { BookOpen, Clock, Edit, Trash2, Plus } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
+import RecipeForm from './RecipeForm';
 
 interface Recipe {
   id: number;
   title: string;
   description: string;
+  ingredients: string;
+  instructions: string;
   cooking_time: number;
   difficulty: string;
   image_url?: string;
+  categories: string[];
+  user_id: number;
+  firstName: string;
+  lastName: string;
   created_at: string;
 }
 
@@ -22,6 +29,8 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showRecipeForm, setShowRecipeForm] = useState(false);
+  const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,13 +44,15 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
       const response = await apiService.getUserRecipes(userId);
       
       if (response.success && response.data) {
-        // Backend now handles duplicates properly, so we can use the data directly
         console.log('UserRecipes: Received data:', response.data);
-        console.log('UserRecipes: Total categories:', Object.keys(response.data).length);
-        const totalRecipes = Object.values(response.data).flat().length;
-        console.log('UserRecipes: Total recipes:', totalRecipes);
+        console.log('UserRecipes: Data type:', typeof response.data);
+        console.log('UserRecipes: Is array:', Array.isArray(response.data));
         
-        setRecipes(response.data);
+        // Ensure we have an array of recipes
+        const recipesData = Array.isArray(response.data) ? response.data : [];
+        console.log('UserRecipes: Total recipes:', recipesData.length);
+        
+        setRecipes(recipesData);
       } else {
         setError('Failed to load recipes');
       }
@@ -52,8 +63,12 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
     }
   };
 
-  const handleEditRecipe = (recipeId: number) => {
-                    navigate(`/recipe-management/edit/${recipeId}`);
+  const handleEditRecipe = (recipe: Recipe) => {
+    console.log('UserRecipes: Edit button clicked for recipe:', recipe);
+    console.log('UserRecipes: Recipe user_id:', recipe.user_id);
+    console.log('UserRecipes: Recipe categories:', recipe.categories);
+    setEditingRecipe(recipe);
+    setShowRecipeForm(true);
   };
 
   const handleDeleteRecipe = async (recipeId: number) => {
@@ -171,7 +186,7 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => handleEditRecipe(recipe.id)}
+                    onClick={() => handleEditRecipe(recipe)}
                     className="h-8 px-3"
                   >
                     <Edit className="w-3 h-3" />
@@ -190,6 +205,17 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
           </div>
         ))}
       </div>
+
+      {/* Recipe Form Modal */}
+      <RecipeForm
+        isOpen={showRecipeForm}
+        onClose={() => setShowRecipeForm(false)}
+        recipe={editingRecipe}
+        onSuccess={() => {
+          loadUserRecipes();
+          setShowRecipeForm(false);
+        }}
+      />
     </div>
   );
 }

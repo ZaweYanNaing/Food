@@ -65,6 +65,11 @@ export default function RecipeManagementPage() {
       setIsLoading(true);
       const response = await apiService.getRecipes();
       if (response.success) {
+        console.log('Loaded recipes:', response.data);
+        // Debug: Check user_id types
+        response.data.forEach((recipe: Recipe, index: number) => {
+          console.log(`Recipe ${index}: ID=${recipe.id}, user_id=${recipe.user_id}, user_id type=${typeof recipe.user_id}`);
+        });
         setRecipes(response.data);
       } else {
         toast.error('Failed to load recipes');
@@ -181,6 +186,10 @@ export default function RecipeManagementPage() {
   };
 
   const handleEditRecipe = (recipe: Recipe) => {
+    console.log('Edit button clicked for recipe:', recipe);
+    console.log('Recipe user_id:', recipe.user_id, 'type:', typeof recipe.user_id);
+    console.log('Current user ID:', user?.id, 'type:', typeof user?.id);
+    console.log('User ID comparison:', recipe.user_id === user?.id);
     setEditingRecipe(recipe);
     setShowRecipeForm(true);
   };

@@ -169,6 +169,12 @@ class RecipeController {
                 return ['success' => false, 'error' => 'Recipe not found'];
             }
             
+            // Debug logging
+            error_log("Recipe update debug - Recipe ID: $id");
+            error_log("Recipe user_id from DB: " . $recipe['user_id'] . " (type: " . gettype($recipe['user_id']) . ")");
+            error_log("Request user_id: " . $data['user_id'] . " (type: " . gettype($data['user_id']) . ")");
+            error_log("Comparison result: " . ($recipe['user_id'] == $data['user_id'] ? 'TRUE' : 'FALSE'));
+            
             if ($recipe['user_id'] != $data['user_id']) {
                 return ['success' => false, 'error' => 'You can only edit your own recipes'];
             }
@@ -344,8 +350,9 @@ class RecipeController {
     
     public function getUserRecipes($userId) {
         try {
-            $query = "SELECT r.*, GROUP_CONCAT(c.name) as categories
+            $query = "SELECT r.*, u.firstName, u.lastName, GROUP_CONCAT(c.name) as categories
                       FROM recipes r 
+                      LEFT JOIN users u ON r.user_id = u.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
                       WHERE r.user_id = :user_id

@@ -244,11 +244,16 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
       };
 
       console.log('Sending recipe data:', recipeData);
+      console.log('Recipe object:', recipe);
+      console.log('User ID from user:', user.id);
+      console.log('User ID type:', typeof user.id);
 
       let response;
       if (recipe) {
         // Update existing recipe
+        console.log('Updating recipe with ID:', recipe.id);
         response = await apiService.updateRecipe(recipe.id, recipeData);
+        console.log('Update response:', response);
       } else {
         // Create new recipe
         response = await apiService.createRecipe(recipeData);
