@@ -87,6 +87,50 @@ try {
             }
             break;
             
+        case '/recipes/cuisine-types':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $result = $controller->getCuisineTypes();
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/difficulty-levels':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $result = $controller->getDifficultyLevels();
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/trending':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $limit = $_GET['limit'] ?? 10;
+                $period = $_GET['period'] ?? 'week';
+                $result = $controller->getTrendingRecipes($limit, $period);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/popular':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $limit = $_GET['limit'] ?? 10;
+                $result = $controller->getPopularRecipes($limit);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/recent':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $limit = $_GET['limit'] ?? 10;
+                $result = $controller->getRecentRecipes($limit);
+                echo json_encode($result);
+            }
+            break;
+            
         case '/recipes/user':
             if ($method === 'GET') {
                 $controller = new RecipeController();

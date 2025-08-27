@@ -6,6 +6,7 @@ import HomePage from './pages/HomePage';
 import AboutPage from './pages/AboutPage';
 import RecipeManagementPage from './pages/RecipeManagementPage';
 import RecipeDetailPage from './pages/RecipeDetailPage';
+import AdvancedSearchPage from './pages/AdvancedSearchPage';
 import CommunityCookbookPage from './pages/CommunityCookbookPage';
 import ContactPage from './pages/ContactPage';
 import CulinaryResourcesPage from './pages/CulinaryResourcesPage';
@@ -32,9 +33,10 @@ function App() {
               <Route path="/" element={<Layout />}>
                 <Route index element={<HomePage />} />
                 <Route path="about" element={<AboutPage />} />
-                <Route path="recipe-management" element={<RecipeManagementPage />} />
-                <Route path="recipe/:id" element={<RecipeDetailPage />} />
-                <Route path="community" element={<CommunityCookbookPage />} />
+                              <Route path="recipe-management" element={<RecipeManagementPage />} />
+              <Route path="recipe/:id" element={<RecipeDetailPage />} />
+              <Route path="search" element={<AdvancedSearchPage />} />
+              <Route path="community" element={<CommunityCookbookPage />} />
                 <Route path="contact" element={<ContactPage />} />
                 <Route path="culinary-resources" element={<CulinaryResourcesPage />} />
                 <Route path="educational-resources" element={<EducationalResourcesPage />} />

@@ -267,3 +267,32 @@ INSERT INTO user_activity (user_id, activity_type, target_id, target_type, descr
 (1, 'recipe_rated', 2, 'recipe', 'Rated Chicken Stir Fry 4 stars'),
 (1, 'recipe_reviewed', 2, 'recipe', 'Reviewed Chicken Stir Fry');
 
+
+
+CREATE TABLE IF NOT 
+EXISTS recipe_views 
+(id INT AUTO_INCREMENT PRIMARY KEY, 
+user_id INT, recipe_id INT NOT NULL, 
+ip_address VARCHAR(45), 
+user_agent TEXT, 
+viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, 
+FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL, 
+FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE, INDEX idx_recipe_views (recipe_id, viewed_at), 
+INDEX idx_user_views (user_id, viewed_at), INDEX idx_ip_views (ip_address, viewed_at));
+
+
+
+INSERT INTO recipe_views 
+(recipe_id, ip_address, viewed_at) 
+VALUES (1, '192.168.1.1', DATE_SUB(NOW(), INTERVAL 2 DAY)), 
+(1, '192.168.1.2', DATE_SUB(NOW(), INTERVAL 1 DAY)), 
+(1, '192.168.1.3', NOW()), 
+(2, '192.168.1.1', DATE_SUB(NOW(), INTERVAL 3 DAY)), 
+(2, '192.168.1.2', DATE_SUB(NOW(), INTERVAL 2 DAY)), 
+(2, '192.168.1.3', DATE_SUB(NOW(), INTERVAL 1 DAY)), 
+(2, '192.168.1.4', NOW());
+
+ALTER TABLE recipes ADD COLUMN cuisine_type VARCHAR(100) DEFAULT NULL;
+ALTER TABLE recipes ADD COLUMN servings INT DEFAULT NULL;
+
+UPDATE recipes SET cuisine_type = 'American', servings = 4 WHERE id = 1; UPDATE recipes SET cuisine_type = 'Asian', servings = 2 WHERE id = 2;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, Search, TrendingUp, Flame, Clock3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useNavigate } from 'react-router-dom';
 
 interface NewsFeedItem {
   id: number;
@@ -23,7 +24,12 @@ interface CookingEvent {
 }
 
 export default function HomePage() {
+  const navigate = useNavigate();
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [trendingRecipes, setTrendingRecipes] = useState<any[]>([]);
+  const [popularRecipes, setPopularRecipes] = useState<any[]>([]);
+  const [recentRecipes, setRecentRecipes] = useState<any[]>([]);
 
   // Sample data - replace with API calls
   const newsFeedItems: NewsFeedItem[] = [
@@ -99,6 +105,18 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+    }
+  };
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -115,12 +133,43 @@ export default function HomePage() {
             creativity among food enthusiasts. Share recipes, learn techniques, 
             and connect with fellow cooking enthusiasts.
           </p>
+          {/* Search Bar */}
+          <div className="max-w-2xl mx-auto mb-8">
+            <div className="relative">
+              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search for recipes, ingredients, or cooking techniques..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={handleKeyPress}
+                className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent shadow-lg"
+              />
+              <Button
+                onClick={handleSearch}
+                size="lg"
+                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#78C841] hover:bg-[#6bb03a] px-6"
+              >
+                Search
+              </Button>
+            </div>
+          </div>
+
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-4">
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-4"
+              onClick={() => navigate('/recipe-management')}
+            >
               Explore Recipes
             </Button>
-            <Button variant="outline" size="lg" className="text-lg px-8 py-4">
-              Join Community
+            <Button 
+              variant="outline" 
+              size="lg" 
+              className="text-lg px-8 py-4"
+              onClick={() => navigate('/search')}
+            >
+              Advanced Search
             </Button>
           </div>
         </div>
@@ -168,6 +217,76 @@ export default function HomePage() {
               <p className="text-gray-600">
                 Explore diverse cuisines and recipes from around the world
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Trending Recipes Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Discover Amazing Recipes
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Explore trending, popular, and recently added recipes from our community
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {/* Trending Recipes */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <TrendingUp className="w-6 h-6 text-[#78C841] mr-2" />
+                <h3 className="text-xl font-semibold text-gray-900">Trending Now</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Most popular recipes this week based on views, ratings, and likes
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate('/search?tab=trending')}
+              >
+                View Trending
+              </Button>
+            </div>
+
+            {/* Popular Recipes */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <Flame className="w-6 h-6 text-orange-500 mr-2" />
+                <h3 className="text-xl font-semibold text-gray-900">Most Popular</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Highest-rated and most-liked recipes from our community
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate('/search?tab=popular')}
+              >
+                View Popular
+              </Button>
+            </div>
+
+            {/* Recent Recipes */}
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center mb-4">
+                <Clock3 className="w-6 h-6 text-blue-500 mr-2" />
+                <h3 className="text-xl font-semibold text-gray-900">Recently Added</h3>
+              </div>
+              <p className="text-gray-600 mb-4">
+                Fresh recipes just added by our community members
+              </p>
+              <Button 
+                variant="outline" 
+                className="w-full"
+                onClick={() => navigate('/search?tab=recent')}
+              >
+                View Recent
+              </Button>
             </div>
           </div>
         </div>

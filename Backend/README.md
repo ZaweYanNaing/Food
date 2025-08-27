@@ -176,7 +176,6 @@ Recipe ratings and reviews
 
 4. Advanced Search & Discovery 🔍
 Recipe search with filters (ingredients, cooking time, difficulty)
-Recipe recommendations
 Trending recipes
 
 

@@ -292,10 +292,16 @@ class RecipeController {
     
     public function searchRecipes($query, $filters = []) {
         try {
-            $whereClause = "WHERE (r.title LIKE :search OR r.description LIKE :search OR r.ingredients LIKE :search)";
-            $params = [':search' => "%$query%"];
+            $whereClause = "WHERE 1=1";
+            $params = [];
             
-            // Apply additional filters
+            // Search in title, description, ingredients
+            if (!empty($query)) {
+                $whereClause .= " AND (r.title LIKE :search_query OR r.description LIKE :search_query OR r.ingredients LIKE :search_query)";
+                $params[':search_query'] = "%$query%";
+            }
+            
+            // Apply filters
             if (!empty($filters['category'])) {
                 $whereClause .= " AND r.id IN (SELECT recipe_id FROM recipe_categories WHERE category_id = :category_id)";
                 $params[':category_id'] = $filters['category'];
@@ -311,17 +317,52 @@ class RecipeController {
                 $params[':max_cooking_time'] = $filters['max_cooking_time'];
             }
             
-            $query = "SELECT r.*, u.firstName, u.lastName,
-                             GROUP_CONCAT(c.name) as categories
+            if (!empty($filters['min_cooking_time'])) {
+                $whereClause .= " AND r.cooking_time >= :min_cooking_time";
+                $params[':min_cooking_time'] = $filters['min_cooking_time'];
+            }
+            
+            if (!empty($filters['cuisine_type'])) {
+                $whereClause .= " AND r.cuisine_type = :cuisine_type";
+                $params[':cuisine_type'] = $filters['cuisine_type'];
+            }
+            
+            if (!empty($filters['servings'])) {
+                $whereClause .= " AND r.servings = :servings";
+                $params[':servings'] = $filters['servings'];
+            }
+            
+            if (!empty($filters['ingredients'])) {
+                $whereClause .= " AND r.ingredients LIKE :ingredients";
+                $params[':ingredients'] = "%{$filters['ingredients']}%";
+            }
+            
+            $sql = "SELECT r.*, u.firstName, u.lastName, 
+                             GROUP_CONCAT(c.name) as categories,
+                             COALESCE(rr.avg_rating, 0) as average_rating,
+                             COALESCE(rr.total_ratings, 0) as total_ratings,
+                             COALESCE(rl.total_likes, 0) as total_likes
                       FROM recipes r 
                       LEFT JOIN users u ON r.user_id = u.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
+                      LEFT JOIN (
+                          SELECT recipe_id, 
+                                 AVG(rating) as avg_rating, 
+                                 COUNT(*) as total_ratings
+                          FROM recipe_ratings 
+                          GROUP BY recipe_id
+                      ) rr ON r.id = rr.recipe_id
+                      LEFT JOIN (
+                          SELECT recipe_id, COUNT(*) as total_likes
+                          FROM recipe_likes 
+                          GROUP BY recipe_id
+                      ) rl ON r.id = rl.recipe_id
                       $whereClause
                       GROUP BY r.id
                       ORDER BY r.created_at DESC";
             
-            $stmt = $this->db->prepare($query);
+            $stmt = $this->db->prepare($sql);
             foreach ($params as $key => $value) {
                 $stmt->bindValue($key, $value);
             }
@@ -329,13 +370,18 @@ class RecipeController {
             
             $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Process categories
+            // Process categories string to array
             foreach ($recipes as &$recipe) {
                 if ($recipe['categories']) {
                     $recipe['categories'] = explode(',', $recipe['categories']);
                 } else {
                     $recipe['categories'] = [];
                 }
+                
+                // Convert to numeric types
+                $recipe['average_rating'] = (float) $recipe['average_rating'];
+                $recipe['total_ratings'] = (int) $recipe['total_ratings'];
+                $recipe['total_likes'] = (int) $recipe['total_likes'];
             }
             
             return ['success' => true, 'data' => $recipes];
@@ -352,6 +398,219 @@ class RecipeController {
             
             $categories = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['success' => true, 'data' => $categories];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function getTrendingRecipes($limit = 10, $period = 'week') {
+        try {
+            $dateFilter = '';
+            switch ($period) {
+                case 'day':
+                    $dateFilter = 'AND r.created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)';
+                    break;
+                case 'week':
+                    $dateFilter = 'AND r.created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)';
+                    break;
+                case 'month':
+                    $dateFilter = 'AND r.created_at >= DATE_SUB(NOW(), INTERVAL 1 MONTH)';
+                    break;
+                default:
+                    $dateFilter = 'AND r.created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)';
+            }
+            
+            $query = "SELECT r.*, u.firstName, u.lastName,
+                             GROUP_CONCAT(c.name) as categories,
+                             COALESCE(rr.avg_rating, 0) as average_rating,
+                             COALESCE(rr.total_ratings, 0) as total_ratings,
+                             COALESCE(rl.total_likes, 0) as total_likes,
+                             COALESCE(rv.total_views, 0) as total_views
+                      FROM recipes r 
+                      LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
+                      LEFT JOIN categories c ON rc.category_id = c.id
+                      LEFT JOIN (
+                          SELECT recipe_id, 
+                                 AVG(rating) as avg_rating, 
+                                 COUNT(*) as total_ratings
+                          FROM recipe_ratings 
+                          GROUP BY recipe_id
+                      ) rr ON r.id = rr.recipe_id
+                      LEFT JOIN (
+                          SELECT recipe_id, COUNT(*) as total_likes
+                          FROM recipe_likes 
+                          GROUP BY recipe_id
+                      ) rl ON r.id = rl.recipe_id
+                      LEFT JOIN (
+                          SELECT recipe_id, COUNT(*) as total_views
+                          FROM recipe_views 
+                          GROUP BY recipe_id
+                      ) rv ON r.id = rv.recipe_id
+                      WHERE 1=1 $dateFilter
+                      GROUP BY r.id
+                      ORDER BY (COALESCE(rr.total_ratings, 0) * 0.3 + 
+                               COALESCE(rl.total_likes, 0) * 0.4 + 
+                               COALESCE(rv.total_views, 0) * 0.3) DESC,
+                               r.created_at DESC
+                      LIMIT :limit";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Process categories string to array
+            foreach ($recipes as &$recipe) {
+                if ($recipe['categories']) {
+                    $recipe['categories'] = explode(',', $recipe['categories']);
+                } else {
+                    $recipe['categories'] = [];
+                }
+                
+                // Convert to numeric types
+                $recipe['average_rating'] = (float) $recipe['average_rating'];
+                $recipe['total_ratings'] = (int) $recipe['total_ratings'];
+                $recipe['total_likes'] = (int) $recipe['total_likes'];
+                $recipe['total_views'] = (int) $recipe['total_views'];
+            }
+            
+            return ['success' => true, 'data' => $recipes];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function getPopularRecipes($limit = 10) {
+        try {
+            $query = "SELECT r.*, u.firstName, u.lastName,
+                             GROUP_CONCAT(c.name) as categories,
+                             COALESCE(rr.avg_rating, 0) as average_rating,
+                             COALESCE(rr.total_ratings, 0) as total_ratings,
+                             COALESCE(rl.total_likes, 0) as total_likes
+                      FROM recipes r 
+                      LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
+                      LEFT JOIN categories c ON rc.category_id = c.id
+                      LEFT JOIN (
+                          SELECT recipe_id, 
+                                 AVG(rating) as avg_rating, 
+                                 COUNT(*) as total_ratings
+                          FROM recipe_ratings 
+                          GROUP BY recipe_id
+                      ) rr ON r.id = rr.recipe_id
+                      LEFT JOIN (
+                          SELECT recipe_id, COUNT(*) as total_likes
+                          FROM recipe_likes 
+                          GROUP BY recipe_id
+                      ) rl ON r.id = rl.recipe_id
+                      GROUP BY r.id
+                      HAVING total_ratings > 0 OR total_likes > 0
+                      ORDER BY (COALESCE(rr.total_ratings, 0) * 0.5 + 
+                               COALESCE(rl.total_likes, 0) * 0.5) DESC
+                      LIMIT :limit";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Process categories string to array
+            foreach ($recipes as &$recipe) {
+                if ($recipe['categories']) {
+                    $recipe['categories'] = explode(',', $recipe['categories']);
+                } else {
+                    $recipe['categories'] = [];
+                }
+                
+                // Convert to numeric types
+                $recipe['average_rating'] = (float) $recipe['average_rating'];
+                $recipe['total_ratings'] = (int) $recipe['total_ratings'];
+                $recipe['total_likes'] = (int) $recipe['total_likes'];
+            }
+            
+            return ['success' => true, 'data' => $recipes];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function getRecentRecipes($limit = 10) {
+        try {
+            $query = "SELECT r.*, u.firstName, u.lastName,
+                             GROUP_CONCAT(c.name) as categories,
+                             COALESCE(rr.avg_rating, 0) as average_rating,
+                             COALESCE(rr.total_ratings, 0) as total_ratings,
+                             COALESCE(rl.total_likes, 0) as total_likes
+                      FROM recipes r 
+                      LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
+                      LEFT JOIN categories c ON rc.category_id = c.id
+                      LEFT JOIN (
+                          SELECT recipe_id, 
+                                 AVG(rating) as avg_rating, 
+                                 COUNT(*) as total_ratings
+                          FROM recipe_ratings 
+                          GROUP BY recipe_id
+                      ) rr ON r.id = rr.recipe_id
+                      LEFT JOIN (
+                          SELECT recipe_id, COUNT(*) as total_likes
+                          FROM recipe_likes 
+                          GROUP BY recipe_id
+                      ) rl ON r.id = rl.recipe_id
+                      GROUP BY r.id
+                      ORDER BY r.created_at DESC
+                      LIMIT :limit";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            
+            $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            // Process categories string to array
+            foreach ($recipes as &$recipe) {
+                if ($recipe['categories']) {
+                    $recipe['categories'] = explode(',', $recipe['categories']);
+                } else {
+                    $recipe['categories'] = [];
+                }
+                
+                // Convert to numeric types
+                $recipe['average_rating'] = (float) $recipe['average_rating'];
+                $recipe['total_ratings'] = (int) $recipe['total_ratings'];
+                $recipe['total_likes'] = (int) $recipe['total_likes'];
+            }
+            
+            return ['success' => true, 'data' => $recipes];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function getCuisineTypes() {
+        try {
+            $query = "SELECT DISTINCT cuisine_type FROM recipes WHERE cuisine_type IS NOT NULL AND cuisine_type != '' ORDER BY cuisine_type";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            $cuisineTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return ['success' => true, 'data' => $cuisineTypes];
+        } catch (Exception $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    public function getDifficultyLevels() {
+        try {
+            $query = "SELECT DISTINCT difficulty FROM recipes WHERE difficulty IS NOT NULL AND difficulty != '' ORDER BY difficulty";
+            $stmt = $this->db->prepare($query);
+            $stmt->execute();
+            
+            $difficulties = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            return ['success' => true, 'data' => $difficulties];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }

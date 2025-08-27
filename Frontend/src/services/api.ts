@@ -304,6 +304,57 @@ class ApiService {
   async getUserRecipeStatus(userId: number, recipeId: number): Promise<ApiResponse> {
     return this.request(`/recipes/${recipeId}/user-status?user_id=${userId}`);
   }
+
+  // Advanced Search & Discovery Methods
+  async getTrendingRecipes(limit: number = 10, period: string = 'week'): Promise<ApiResponse> {
+    try {
+      const response = await this.request(`/recipes/trending?limit=${limit}&period=${period}`);
+      return response;
+    } catch (error) {
+      console.error('Error getting trending recipes:', error);
+      return { success: false, message: 'Failed to get trending recipes' };
+    }
+  }
+
+  async getPopularRecipes(limit: number = 10): Promise<ApiResponse> {
+    try {
+      const response = await this.request(`/recipes/popular?limit=${limit}`);
+      return response;
+    } catch (error) {
+      console.error('Error getting popular recipes:', error);
+      return { success: false, message: 'Failed to get popular recipes' };
+    }
+  }
+
+  async getRecentRecipes(limit: number = 10): Promise<ApiResponse> {
+    try {
+      const response = await this.request(`/recipes/recent?limit=${limit}`);
+      return response;
+    } catch (error) {
+      console.error('Error getting recent recipes:', error);
+      return { success: false, message: 'Failed to get recent recipes' };
+    }
+  }
+
+  async getCuisineTypes(): Promise<ApiResponse> {
+    try {
+      const response = await this.request('/recipes/cuisine-types');
+      return response;
+    } catch (error) {
+      console.error('Error getting cuisine types:', error);
+      return { success: false, message: 'Failed to get cuisine types' };
+    }
+  }
+
+  async getDifficultyLevels(): Promise<ApiResponse> {
+    try {
+      const response = await this.request('/recipes/difficulty-levels');
+      return response;
+    } catch (error) {
+      console.error('Error getting difficulty levels:', error);
+      return { success: false, message: 'Failed to get difficulty levels' };
+    }
+  }
 }
 
 export const apiService = new ApiService();
