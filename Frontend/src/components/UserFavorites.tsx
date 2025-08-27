@@ -27,7 +27,7 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
   const [favorites, setFavorites] = useState<FavoriteRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedRecipe, setSelectedRecipe] = useState<FavoriteRecipe | null>(null);
+  const [selectedRecipe] = useState<FavoriteRecipe | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const navigate = useNavigate();
 

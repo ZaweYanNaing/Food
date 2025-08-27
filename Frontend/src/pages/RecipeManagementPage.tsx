@@ -49,7 +49,7 @@ export default function RecipeManagementPage() {
     max_cooking_time: '',
   });
   const [showFilters, setShowFilters] = useState(false);
-  const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
+  const [selectedRecipe] = useState<Recipe | null>(null);
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [showRecipeForm, setShowRecipeForm] = useState(false);
   const [editingRecipe, setEditingRecipe] = useState<Recipe | null>(null);
@@ -183,10 +183,7 @@ export default function RecipeManagementPage() {
     }
   };
 
-  const handleViewRecipe = (recipe: Recipe) => {
-    setSelectedRecipe(recipe);
-    setShowRecipeModal(true);
-  };
+ 
 
   const handleEditRecipe = (recipe: Recipe) => {
     console.log('Edit button clicked for recipe:', recipe);
