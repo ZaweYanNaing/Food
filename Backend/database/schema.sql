@@ -114,3 +114,16 @@ INSERT INTO user_activity (user_id, activity_type, target_id, target_type, descr
 (1, 'recipe_created', 1, 'recipe', 'Created Classic Pancakes recipe'),
 (1, 'recipe_created', 2, 'recipe', 'Created Chicken Stir Fry recipe'),
 (1, 'profile_updated', 1, 'profile', 'Updated profile information');
+
+ALTER TABLE user_activity 
+MODIFY COLUMN activity_type ENUM(
+    'recipe_created', 
+    'recipe_updated',
+    'recipe_deleted',
+    'recipe_liked', 
+    'recipe_favorited', 
+    'recipe_unfavorited',
+    'recipe_shared', 
+    'resource_downloaded', 
+    'profile_updated'
+) NOT NULL;

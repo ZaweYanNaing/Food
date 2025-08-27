@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Heart, Download, User, Share2, Edit, Clock } from 'lucide-react';
+import { BookOpen, Heart, Download, User, Share2, Edit, Clock, Trash2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
@@ -53,6 +53,10 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
     switch (activityType) {
       case 'recipe_created':
         return <BookOpen className="w-5 h-5 text-[#78C841]" />;
+      case 'recipe_updated':
+        return <Edit className="w-5 h-5 text-blue-500" />;
+      case 'recipe_deleted':
+        return <Trash2 className="w-5 h-5 text-red-500" />;
       case 'recipe_liked':
         return <Heart className="w-5 h-5 text-red-500" />;
       case 'recipe_favorited':
@@ -74,6 +78,10 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
     switch (activityType) {
       case 'recipe_created':
         return 'bg-[#78C841]/20';
+      case 'recipe_updated':
+        return 'bg-blue-100';
+      case 'recipe_deleted':
+        return 'bg-red-100';
       case 'recipe_liked':
         return 'bg-red-100';
       case 'recipe_favorited':
@@ -87,7 +95,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
       case 'profile_updated':
         return 'bg-gray-100';
       default:
-        return 'bg-gray-100';
+        return 'bg-gray-200';
     }
   };
 
@@ -95,6 +103,10 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
     switch (activity.activity_type) {
       case 'recipe_created':
         return `Created recipe "${activity.target_title || 'Untitled'}"`;
+      case 'recipe_updated':
+        return `Updated recipe "${activity.target_title || 'Untitled'}"`;
+      case 'recipe_deleted':
+        return `Deleted recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_liked':
         return `Liked recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_favorited':
@@ -212,7 +224,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
                     {activity.target_image && (
                       <div className="w-12 h-12 bg-gray-200 rounded-lg overflow-hidden">
                         <img 
-                          src={activity.target_image} 
+                          src={`http://localhost:8080${activity.target_image}`}
                           alt={activity.target_title}
                           className="w-full h-full object-cover"
                         />
@@ -230,16 +242,7 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
                     {formatTimeAgo(activity.created_at)}
                   </span>
                   
-                  {activity.activity_type === 'recipe_created' && (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => navigate(`/recipe-management/edit/${activity.target_id}`)}
-                      className="h-6 px-2 text-xs"
-                    >
-                      Edit Recipe
-                    </Button>
-                  )}
+               
                 </div>
               </div>
             </div>

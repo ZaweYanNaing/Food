@@ -145,6 +145,9 @@ class RecipeController {
             
             $this->db->commit();
             
+            // Log user activity
+            $this->logUserActivity($data['user_id'], 'recipe_created', $recipeId, 'recipe', 'Created new recipe: ' . $data['title']);
+            
             return [
                 'success' => true, 
                 'message' => 'Recipe created successfully', 
@@ -230,6 +233,9 @@ class RecipeController {
             
             $this->db->commit();
             
+            // Log user activity
+            $this->logUserActivity($data['user_id'], 'recipe_updated', $id, 'recipe', 'Updated recipe: ' . $data['title']);
+            
             return ['success' => true, 'message' => 'Recipe updated successfully'];
         } catch (Exception $e) {
             $this->db->rollBack();
@@ -273,6 +279,9 @@ class RecipeController {
             }
             
             $this->db->commit();
+            
+            // Log user activity
+            $this->logUserActivity($userId, 'recipe_deleted', $id, 'recipe', 'Deleted recipe');
             
             return ['success' => true, 'message' => 'Recipe deleted successfully'];
         } catch (Exception $e) {
@@ -377,6 +386,22 @@ class RecipeController {
             return ['success' => true, 'data' => $recipes];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
+    
+    private function logUserActivity($userId, $activityType, $targetId, $targetType, $description) {
+        try {
+            $query = "INSERT INTO user_activity (user_id, activity_type, target_id, target_type, description) VALUES (:user_id, :activity_type, :target_id, :target_type, :description)";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':activity_type', $activityType);
+            $stmt->bindParam(':target_id', $targetId);
+            $stmt->bindParam(':target_type', $targetType);
+            $stmt->bindParam(':description', $description);
+            $stmt->execute();
+        } catch (Exception $e) {
+            // Log error but don't fail the main operation
+            error_log("Failed to log user activity: " . $e->getMessage());
         }
     }
 }

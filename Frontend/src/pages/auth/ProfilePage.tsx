@@ -445,7 +445,7 @@ export default function ProfilePage() {
                 <p className="text-white/90">Member since {new Date().toLocaleDateString()}</p>
               </div>
             </div>
-            <div className="flex space-x-3">
+            <div className="flex md:flex-row md:space-x-3 flex-col space-y-3">
               <Button
                 variant="outline"
                 onClick={() => navigate('/')}
