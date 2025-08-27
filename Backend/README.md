@@ -170,7 +170,7 @@ Personal recipe collection
 Favorite recipes
 User activity history
 
-3. Recipe Sharing & Social Features 🌟
+3. Recipe like Features 🌟
 Like  recipes
 Recipe ratings and reviews
 
@@ -178,7 +178,7 @@ Recipe ratings and reviews
 Recipe search with filters (ingredients, cooking time, difficulty)
 Recipe recommendations
 Trending recipes
-Seasonal recipe suggestions
+
 
 5. Shopping List & Meal Planning 📝
 Create shopping lists from recipes

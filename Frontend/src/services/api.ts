@@ -265,6 +265,45 @@ class ApiService {
       throw error;
     }
   }
+
+  // Recipe like functionality
+  async toggleRecipeLike(userId: number, recipeId: number): Promise<ApiResponse> {
+    return this.request('/recipes/like', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, recipe_id: recipeId }),
+    });
+  }
+
+  // Recipe rating functionality
+  async addRecipeRating(userId: number, recipeId: number, rating: number): Promise<ApiResponse> {
+    return this.request('/recipes/rate', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, recipe_id: recipeId, rating }),
+    });
+  }
+
+  // Recipe review functionality
+  async addRecipeReview(userId: number, recipeId: number, reviewText: string, ratingId?: number): Promise<ApiResponse> {
+    return this.request('/recipes/review', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, recipe_id: recipeId, review_text: reviewText, rating_id: ratingId }),
+    });
+  }
+
+  // Get recipe ratings and reviews
+  async getRecipeRatingsReviews(recipeId: number): Promise<ApiResponse> {
+    return this.request(`/recipes/${recipeId}/ratings-reviews`);
+  }
+
+  // Get user's ratings and reviews
+  async getUserRatingsReviews(userId: number): Promise<ApiResponse> {
+    return this.request(`/users/${userId}/ratings-reviews`);
+  }
+
+  // Get user's status for a specific recipe (like, rating, review)
+  async getUserRecipeStatus(userId: number, recipeId: number): Promise<ApiResponse> {
+    return this.request(`/recipes/${recipeId}/user-status?user_id=${userId}`);
+  }
 }
 
 export const apiService = new ApiService();

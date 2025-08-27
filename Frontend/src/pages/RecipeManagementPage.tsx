@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Plus, Edit, Trash2, Search, Filter, Eye, Heart } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import { toast } from 'react-toastify';
 import RecipeForm from '../components/RecipeForm';
-
+import RecipeRatingReview from '../components/RecipeRatingReview';
+ 
 import {
   Tooltip,
   TooltipContent,
@@ -36,6 +38,7 @@ interface Category {
 
 export default function RecipeManagementPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -468,7 +471,7 @@ export default function RecipeManagementPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleViewRecipe(recipe)}
+                        onClick={() => navigate(`/recipe/${recipe.id}`)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View
@@ -608,6 +611,21 @@ export default function RecipeManagementPage() {
                 <div className="bg-gray-50 p-4 rounded-lg">
                   <pre className="whitespace-pre-wrap text-gray-700 font-sans">{selectedRecipe.instructions}</pre>
                 </div>
+              </div>
+
+              {/* Ratings and Reviews */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ratings & Reviews</h3>
+                <RecipeRatingReview
+                  recipeId={selectedRecipe.id}
+                  recipeTitle={selectedRecipe.title}
+                  onUpdate={() => {
+                    // Refresh favorites if needed
+                    if (user) {
+                      loadUserFavorites();
+                    }
+                  }}
+                />
               </div>
 
               {/* Footer */}

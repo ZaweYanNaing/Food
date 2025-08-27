@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Heart, Download, User, Share2, Edit, Clock, Trash2 } from 'lucide-react';
+import { BookOpen, Heart, Download, User, Share2, Edit, Clock, Trash2, Star, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
@@ -59,10 +59,16 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         return <Trash2 className="w-5 h-5 text-red-500" />;
       case 'recipe_liked':
         return <Heart className="w-5 h-5 text-red-500" />;
+      case 'recipe_unliked':
+        return <Heart className="w-5 h-5 text-gray-500" />;
       case 'recipe_favorited':
         return <Heart className="w-5 h-5 text-pink-500 fill-current" />;
       case 'recipe_unfavorited':
         return <Heart className="w-5 h-5 text-gray-500" />;
+      case 'recipe_rated':
+        return <Star className="w-5 h-5 text-yellow-500" />;
+      case 'recipe_reviewed':
+        return <MessageSquare className="w-5 h-5 text-blue-500" />;
       case 'recipe_shared':
         return <Share2 className="w-5 h-5 text-blue-500" />;
       case 'resource_downloaded':
@@ -84,10 +90,16 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         return 'bg-red-100';
       case 'recipe_liked':
         return 'bg-red-100';
+      case 'recipe_unliked':
+        return 'bg-gray-100';
       case 'recipe_favorited':
         return 'bg-pink-100';
       case 'recipe_unfavorited':
         return 'bg-gray-100';
+      case 'recipe_rated':
+        return 'bg-yellow-100';
+      case 'recipe_reviewed':
+        return 'bg-blue-100';
       case 'recipe_shared':
         return 'bg-blue-100';
       case 'resource_downloaded':
@@ -109,10 +121,16 @@ export default function UserActivity({ userId, limit = 20 }: UserActivityProps) 
         return `Deleted recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_liked':
         return `Liked recipe "${activity.target_title || 'Untitled'}"`;
+      case 'recipe_unliked':
+        return `Unliked recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_favorited':
         return `Added "${activity.target_title || 'Untitled'}" to favorites`;
       case 'recipe_unfavorited':
         return `Removed "${activity.target_title || 'Untitled'}" from favorites`;
+      case 'recipe_rated':
+        return `Rated recipe "${activity.target_title || 'Untitled'}"`;
+      case 'recipe_reviewed':
+        return `Reviewed recipe "${activity.target_title || 'Untitled'}"`;
       case 'recipe_shared':
         return `Shared recipe "${activity.target_title || 'Untitled'}"`;
       case 'resource_downloaded':

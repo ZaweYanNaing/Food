@@ -6,6 +6,7 @@ require_once '../config/database.php';
 require_once '../controllers/RecipeController.php';
 require_once '../controllers/UserController.php';
 require_once '../controllers/AuthController.php';
+require_once '../controllers/RatingReviewController.php';
 
 // Get the request method and URI
 $method = $_SERVER['REQUEST_METHOD'];
@@ -349,6 +350,95 @@ try {
                 $userId = $data['user_id'] ?? 1; // Mock user ID for now
                 
                 $result = $controller->cleanupDuplicateFavorites($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        // Recipe Ratings and Reviews endpoints
+        case '/recipes/like':
+            if ($method === 'POST') {
+                $controller = new RatingReviewController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? 1;
+                $recipeId = $data['recipe_id'] ?? null;
+                
+                if (!$recipeId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Recipe ID required']);
+                    break;
+                }
+                
+                $result = $controller->toggleLike($userId, $recipeId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/rate':
+            if ($method === 'POST') {
+                $controller = new RatingReviewController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? 1;
+                $recipeId = $data['recipe_id'] ?? null;
+                $rating = $data['rating'] ?? null;
+                
+                if (!$recipeId || !$rating) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Recipe ID and rating required']);
+                    break;
+                }
+                
+                $result = $controller->addRating($userId, $recipeId, $rating);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/recipes/review':
+            if ($method === 'POST') {
+                $controller = new RatingReviewController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? 1;
+                $recipeId = $data['recipe_id'] ?? null;
+                $reviewText = $data['review_text'] ?? null;
+                $ratingId = $data['rating_id'] ?? null;
+                
+                if (!$recipeId || !$reviewText) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Recipe ID and review text required']);
+                    break;
+                }
+                
+                $result = $controller->addReview($userId, $recipeId, $reviewText, $ratingId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/recipes\/(\d+)\/ratings-reviews$/', $uri, $matches) ? true : false):
+            $recipeId = $matches[1];
+            $controller = new RatingReviewController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getRecipeRatingsReviews($recipeId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/users\/(\d+)\/ratings-reviews$/', $uri, $matches) ? true : false):
+            $userId = $matches[1];
+            $controller = new RatingReviewController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getUserRatingsReviews($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/recipes\/(\d+)\/user-status$/', $uri, $matches) ? true : false):
+            $recipeId = $matches[1];
+            $controller = new RatingReviewController();
+            
+            if ($method === 'GET') {
+                $userId = $_GET['user_id'] ?? 1;
+                $result = $controller->getUserRecipeStatus($userId, $recipeId);
                 echo json_encode($result);
             }
             break;

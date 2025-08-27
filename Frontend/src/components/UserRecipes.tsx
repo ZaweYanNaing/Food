@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { BookOpen, Clock, Edit, Trash2, Plus } from 'lucide-react';
+import { BookOpen, Clock, Edit, Trash2, Plus, Eye } from 'lucide-react';
 import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
@@ -69,6 +69,10 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
     console.log('UserRecipes: Recipe categories:', recipe.categories);
     setEditingRecipe(recipe);
     setShowRecipeForm(true);
+  };
+
+  const handleViewRecipe = (recipe: Recipe) => {
+    navigate(`/recipe/${recipe.id}`);
   };
 
   const handleDeleteRecipe = async (recipeId: number) => {
@@ -182,29 +186,37 @@ export default function UserRecipes({ userId }: UserRecipesProps) {
                 </div>
               </div>
               
-              <div className="flex items-center justify-between">
-                <span className="text-xs text-gray-400">
-                  {new Date(recipe.created_at).toLocaleDateString()}
-                </span>
-                <div className="flex space-x-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleEditRecipe(recipe)}
-                    className="h-8 px-3"
-                  >
-                    <Edit className="w-3 h-3" />
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleDeleteRecipe(recipe.id)}
-                    className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                  </Button>
-                </div>
-              </div>
+                                <div className="flex items-center justify-between">
+                    <span className="text-xs text-gray-400">
+                      {new Date(recipe.created_at).toLocaleDateString()}
+                    </span>
+                    <div className="flex space-x-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleViewRecipe(recipe)}
+                        className="h-8 px-3"
+                      >
+                        <Eye className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditRecipe(recipe)}
+                        className="h-8 px-3"
+                      >
+                        <Edit className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleDeleteRecipe(recipe.id)}
+                        className="h-8 px-3 text-red-600 border-red-300 hover:bg-red-50"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </Button>
+                    </div>
+                  </div>
             </div>
           </div>
         ))}

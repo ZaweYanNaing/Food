@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { useNavigate } from 'react-router-dom';
 import apiService from '../services/api';
 import { toast } from 'react-toastify';
+import RecipeRatingReview from './RecipeRatingReview';
 
 interface FavoriteRecipe {
   id: number;
@@ -105,8 +106,7 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
   };
 
   const handleViewRecipe = (recipe: FavoriteRecipe) => {
-    setSelectedRecipe(recipe);
-    setShowRecipeModal(true);
+    navigate(`/recipe/${recipe.id}`);
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -320,6 +320,19 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
                   <User className="w-4 h-4 text-gray-500" />
                   <span className="text-gray-600">{selectedRecipe.firstName} {selectedRecipe.lastName}</span>
                 </div>
+              </div>
+
+              {/* Ratings and Reviews */}
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">Ratings & Reviews</h3>
+                <RecipeRatingReview
+                  recipeId={selectedRecipe.id}
+                  recipeTitle={selectedRecipe.title}
+                  onUpdate={() => {
+                    // Refresh favorites if needed
+                    loadUserFavorites();
+                  }}
+                />
               </div>
 
               {/* Footer */}
