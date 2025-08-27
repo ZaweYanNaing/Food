@@ -171,10 +171,8 @@ Favorite recipes
 User activity history
 
 3. Recipe Sharing & Social Features 🌟
-Like/favorite recipes
+Like  recipes
 Recipe ratings and reviews
-Share recipes on social media
-Recipe comments
 
 4. Advanced Search & Discovery 🔍
 Recipe search with filters (ingredients, cooking time, difficulty)
