@@ -23,9 +23,6 @@ WORKDIR /var/www/html
 # Copy Apache configuration
 COPY apache.conf /etc/apache2/sites-available/000-default.conf
 
-# Copy custom PHP configuration
-COPY php.ini /usr/local/etc/php/conf.d/custom.ini
-
 # Change ownership of our working directory
 RUN chown -R www-data:www-data /var/www/html
 

@@ -102,23 +102,9 @@ export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: 
       return;
     }
 
-    try {
-      setIsSubmitting(true);
-      const response = await apiService.addRecipeRating(user.id, recipeId, rating);
-      
-      if (response.success) {
-        setUserRating(rating);
-        toast.success(response.message);
-        loadRecipeData(); // Reload to get updated stats
-        onUpdate?.();
-      } else {
-        toast.error(response.message || 'Failed to add rating');
-      }
-    } catch (error) {
-      toast.error('Error adding rating');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Store the rating but don't submit yet - wait for review
+    setUserRating(rating);
+    setShowReviewForm(true); // Automatically show review form when rating is selected
   };
 
   const handleReviewSubmit = async () => {
@@ -132,20 +118,26 @@ export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: 
       return;
     }
 
+    if (!userRating) {
+      toast.error('Please select a rating');
+      return;
+    }
+
     try {
       setIsSubmitting(true);
-      const response = await apiService.addRecipeReview(user.id, recipeId, userReview);
+      const response = await apiService.addRecipeRatingReview(user.id, recipeId, userRating, userReview);
       
       if (response.success) {
         toast.success(response.message);
         setShowReviewForm(false);
+        setUserReview('');
         loadRecipeData(); // Reload to get updated reviews
         onUpdate?.();
       } else {
-        toast.error(response.message || 'Failed to add review');
+        toast.error(response.message || 'Failed to add rating and review');
       }
     } catch (error) {
-      toast.error('Error adding review');
+      toast.error('Error adding rating and review');
     } finally {
       setIsSubmitting(false);
     }

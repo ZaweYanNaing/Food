@@ -417,41 +417,22 @@ try {
             }
             break;
             
-        case '/recipes/rate':
+        case '/recipes/rate-review':
             if ($method === 'POST') {
                 $controller = new RatingReviewController();
                 $data = json_decode(file_get_contents('php://input'), true);
                 $userId = $data['user_id'] ?? 1;
                 $recipeId = $data['recipe_id'] ?? null;
                 $rating = $data['rating'] ?? null;
-                
-                if (!$recipeId || !$rating) {
-                    http_response_code(400);
-                    echo json_encode(['success' => false, 'error' => 'Recipe ID and rating required']);
-                    break;
-                }
-                
-                $result = $controller->addRating($userId, $recipeId, $rating);
-                echo json_encode($result);
-            }
-            break;
-            
-        case '/recipes/review':
-            if ($method === 'POST') {
-                $controller = new RatingReviewController();
-                $data = json_decode(file_get_contents('php://input'), true);
-                $userId = $data['user_id'] ?? 1;
-                $recipeId = $data['recipe_id'] ?? null;
                 $reviewText = $data['review_text'] ?? null;
-                $ratingId = $data['rating_id'] ?? null;
                 
-                if (!$recipeId || !$reviewText) {
+                if (!$recipeId || !$rating || !$reviewText) {
                     http_response_code(400);
-                    echo json_encode(['success' => false, 'error' => 'Recipe ID and review text required']);
+                    echo json_encode(['success' => false, 'error' => 'Recipe ID, rating, and review text required']);
                     break;
                 }
                 
-                $result = $controller->addReview($userId, $recipeId, $reviewText, $ratingId);
+                $result = $controller->addRatingReview($userId, $recipeId, $rating, $reviewText);
                 echo json_encode($result);
             }
             break;

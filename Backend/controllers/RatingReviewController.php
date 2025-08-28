@@ -51,85 +51,14 @@ class RatingReviewController {
         }
     }
     
-    // Add or update recipe rating
-    public function addRating($userId, $recipeId, $rating) {
+    // Add or update recipe rating and review
+    public function addRatingReview($userId, $recipeId, $rating, $reviewText) {
         try {
             // Validate rating
             if ($rating < 1 || $rating > 5) {
                 return ['success' => false, 'error' => 'Rating must be between 1 and 5'];
             }
             
-            // Check if recipe exists
-            $checkQuery = "SELECT id FROM recipes WHERE id = :recipe_id";
-            $checkStmt = $this->db->prepare($checkQuery);
-            $checkStmt->bindParam(':recipe_id', $recipeId);
-            $checkStmt->execute();
-            
-            if (!$checkStmt->fetch()) {
-                return ['success' => false, 'error' => 'Recipe not found'];
-            }
-            
-            // Start transaction
-            $this->db->beginTransaction();
-            
-            // Check if user already rated this recipe
-            $existingQuery = "SELECT id, rating FROM recipe_ratings WHERE user_id = :user_id AND recipe_id = :recipe_id";
-            $existingStmt = $this->db->prepare($existingQuery);
-            $existingStmt->bindParam(':user_id', $userId);
-            $existingStmt->bindParam(':recipe_id', $recipeId);
-            $existingStmt->execute();
-            
-            $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
-            
-            if ($existing) {
-                // Update existing rating
-                $query = "UPDATE recipe_ratings SET rating = :rating, updated_at = NOW() WHERE id = :id";
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':rating', $rating);
-                $stmt->bindParam(':id', $existing['id']);
-                
-                if (!$stmt->execute()) {
-                    throw new Exception('Failed to update rating');
-                }
-                
-                $ratingId = $existing['id'];
-                $action = 'updated';
-            } else {
-                // Insert new rating
-                $query = "INSERT INTO recipe_ratings (user_id, recipe_id, rating) VALUES (:user_id, :recipe_id, :rating)";
-                $stmt = $this->db->prepare($query);
-                $stmt->bindParam(':user_id', $userId);
-                $stmt->bindParam(':recipe_id', $recipeId);
-                $stmt->bindParam(':rating', $rating);
-                
-                if (!$stmt->execute()) {
-                    throw new Exception('Failed to insert rating');
-                }
-                
-                $ratingId = $this->db->lastInsertId();
-                $action = 'added';
-            }
-            
-            $this->db->commit();
-            
-            // Log user activity
-            $this->logUserActivity($userId, 'recipe_rated', $recipeId, 'recipe', "Rated recipe $rating stars");
-            
-            return [
-                'success' => true, 
-                'message' => "Rating $action successfully", 
-                'rating_id' => $ratingId,
-                'rating' => $rating
-            ];
-        } catch (Exception $e) {
-            $this->db->rollBack();
-            return ['success' => false, 'error' => $e->getMessage()];
-        }
-    }
-    
-    // Add or update recipe review
-    public function addReview($userId, $recipeId, $reviewText, $ratingId = null) {
-        try {
             // Validate review text
             if (empty(trim($reviewText))) {
                 return ['success' => false, 'error' => 'Review text is required'];
@@ -158,11 +87,11 @@ class RatingReviewController {
             $existing = $existingStmt->fetch(PDO::FETCH_ASSOC);
             
             if ($existing) {
-                // Update existing review
-                $query = "UPDATE recipe_reviews SET review_text = :review_text, rating_id = :rating_id, updated_at = NOW() WHERE id = :id";
+                // Update existing review and rating
+                $query = "UPDATE recipe_reviews SET review_text = :review_text, rating = :rating, updated_at = NOW() WHERE id = :id";
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':review_text', $reviewText);
-                $stmt->bindParam(':rating_id', $ratingId);
+                $stmt->bindParam(':rating', $rating);
                 $stmt->bindParam(':id', $existing['id']);
                 
                 if (!$stmt->execute()) {
@@ -171,13 +100,13 @@ class RatingReviewController {
                 
                 $action = 'updated';
             } else {
-                // Insert new review
-                $query = "INSERT INTO recipe_reviews (user_id, recipe_id, review_text, rating_id) VALUES (:user_id, :recipe_id, :review_text, :rating_id)";
+                // Insert new review with rating
+                $query = "INSERT INTO recipe_reviews (user_id, recipe_id, review_text, rating) VALUES (:user_id, :recipe_id, :review_text, :rating)";
                 $stmt = $this->db->prepare($query);
                 $stmt->bindParam(':user_id', $userId);
                 $stmt->bindParam(':recipe_id', $recipeId);
                 $stmt->bindParam(':review_text', $reviewText);
-                $stmt->bindParam(':rating_id', $ratingId);
+                $stmt->bindParam(':rating', $rating);
                 
                 if (!$stmt->execute()) {
                     throw new Exception('Failed to insert review');
@@ -188,12 +117,14 @@ class RatingReviewController {
             
             $this->db->commit();
             
-            // Log user activity
+            // Log user activity for both rating and review
+            $this->logUserActivity($userId, 'recipe_rated', $recipeId, 'recipe', "Rated recipe $rating stars");
             $this->logUserActivity($userId, 'recipe_reviewed', $recipeId, 'recipe', 'Reviewed recipe');
             
             return [
                 'success' => true, 
-                'message' => "Review $action successfully"
+                'message' => "Rating and review $action successfully",
+                'rating' => $rating
             ];
         } catch (Exception $e) {
             $this->db->rollBack();
@@ -207,14 +138,12 @@ class RatingReviewController {
             $query = "SELECT 
                         r.id as review_id,
                         r.review_text,
+                        r.rating,
                         r.created_at as review_date,
-                        rt.rating,
-                        rt.created_at as rating_date,
                         u.firstName,
                         u.lastName,
                         u.profile_image
                       FROM recipe_reviews r
-                      LEFT JOIN recipe_ratings rt ON r.rating_id = rt.id
                       LEFT JOIN users u ON r.user_id = u.id
                       WHERE r.recipe_id = :recipe_id
                       ORDER BY r.created_at DESC";
@@ -226,8 +155,8 @@ class RatingReviewController {
             $reviews = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
             // Get average rating
-            $avgQuery = "SELECT AVG(rating) as average_rating, COUNT(*) as total_ratings 
-                        FROM recipe_ratings 
+            $avgQuery = "SELECT AVG(CAST(rating AS DECIMAL(3,2))) as average_rating, COUNT(*) as total_ratings 
+                        FROM recipe_reviews 
                         WHERE recipe_id = :recipe_id";
             $avgStmt = $this->db->prepare($avgQuery);
             $avgStmt->bindParam(':recipe_id', $recipeId);
@@ -254,13 +183,11 @@ class RatingReviewController {
             $query = "SELECT 
                         r.id as review_id,
                         r.review_text,
+                        r.rating,
                         r.created_at as review_date,
-                        rt.rating,
-                        rt.created_at as rating_date,
                         rec.title as recipe_title,
                         rec.image_url as recipe_image
                       FROM recipe_reviews r
-                      LEFT JOIN recipe_ratings rt ON r.rating_id = rt.id
                       LEFT JOIN recipes rec ON r.recipe_id = rec.id
                       WHERE r.user_id = :user_id
                       ORDER BY r.created_at DESC";
@@ -291,16 +218,8 @@ class RatingReviewController {
             $likeStmt->execute();
             $isLiked = $likeStmt->fetch() ? true : false;
             
-            // Check rating
-            $ratingQuery = "SELECT rating FROM recipe_ratings WHERE user_id = :user_id AND recipe_id = :recipe_id";
-            $ratingStmt = $this->db->prepare($ratingQuery);
-            $ratingStmt->bindParam(':user_id', $userId);
-            $ratingStmt->bindParam(':recipe_id', $recipeId);
-            $ratingStmt->execute();
-            $userRating = $ratingStmt->fetch(PDO::FETCH_ASSOC);
-            
-            // Check review
-            $reviewQuery = "SELECT review_text FROM recipe_reviews WHERE user_id = :user_id AND recipe_id = :recipe_id";
+            // Check rating and review
+            $reviewQuery = "SELECT rating, review_text FROM recipe_reviews WHERE user_id = :user_id AND recipe_id = :recipe_id";
             $reviewStmt = $this->db->prepare($reviewQuery);
             $reviewStmt->bindParam(':user_id', $userId);
             $reviewStmt->bindParam(':recipe_id', $recipeId);
@@ -311,7 +230,7 @@ class RatingReviewController {
                 'success' => true,
                 'data' => [
                     'isLiked' => $isLiked,
-                    'userRating' => $userRating ? $userRating['rating'] : null,
+                    'userRating' => $userReview ? $userReview['rating'] : null,
                     'userReview' => $userReview ? $userReview['review_text'] : null
                 ]
             ];

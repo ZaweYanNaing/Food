@@ -274,19 +274,11 @@ class ApiService {
     });
   }
 
-  // Recipe rating functionality
-  async addRecipeRating(userId: number, recipeId: number, rating: number): Promise<ApiResponse> {
-    return this.request('/recipes/rate', {
+  // Recipe rating and review functionality (combined)
+  async addRecipeRatingReview(userId: number, recipeId: number, rating: number, reviewText: string): Promise<ApiResponse> {
+    return this.request('/recipes/rate-review', {
       method: 'POST',
-      body: JSON.stringify({ user_id: userId, recipe_id: recipeId, rating }),
-    });
-  }
-
-  // Recipe review functionality
-  async addRecipeReview(userId: number, recipeId: number, reviewText: string, ratingId?: number): Promise<ApiResponse> {
-    return this.request('/recipes/review', {
-      method: 'POST',
-      body: JSON.stringify({ user_id: userId, recipe_id: recipeId, review_text: reviewText, rating_id: ratingId }),
+      body: JSON.stringify({ user_id: userId, recipe_id: recipeId, rating, review_text: reviewText }),
     });
   }
 

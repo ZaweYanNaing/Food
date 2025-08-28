@@ -105,17 +105,9 @@ export default function HomePage() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-    }
-  };
+ 
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSearch();
-    }
-  };
+  
 
   return (
     <div className="min-h-screen">
@@ -133,27 +125,7 @@ export default function HomePage() {
             creativity among food enthusiasts. Share recipes, learn techniques, 
             and connect with fellow cooking enthusiasts.
           </p>
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto mb-8">
-            <div className="relative">
-              <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-6 h-6 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search for recipes, ingredients, or cooking techniques..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyPress={handleKeyPress}
-                className="w-full pl-12 pr-4 py-4 text-lg border-2 border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent shadow-lg"
-              />
-              <Button
-                onClick={handleSearch}
-                size="lg"
-                className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-[#78C841] hover:bg-[#6bb03a] px-6"
-              >
-                Search
-              </Button>
-            </div>
-          </div>
+     
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button 
@@ -167,9 +139,9 @@ export default function HomePage() {
               variant="outline" 
               size="lg" 
               className="text-lg px-8 py-4"
-              onClick={() => navigate('/search')}
+              onClick={() => navigate('/discovery')}
             >
-              Advanced Search
+              Recipe Discovery
             </Button>
           </div>
         </div>
@@ -247,7 +219,7 @@ export default function HomePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate('/search?tab=trending')}
+                onClick={() => navigate('/discovery?tab=trending')}
               >
                 View Trending
               </Button>
@@ -265,7 +237,7 @@ export default function HomePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate('/search?tab=popular')}
+                onClick={() => navigate('/discovery?tab=popular')}
               >
                 View Popular
               </Button>
@@ -283,7 +255,7 @@ export default function HomePage() {
               <Button 
                 variant="outline" 
                 className="w-full"
-                onClick={() => navigate('/search?tab=recent')}
+                onClick={() => navigate('/discovery?tab=recent')}
               >
                 View Recent
               </Button>
