@@ -8,6 +8,7 @@ interface Recipe {
   id: number;
   title: string;
   description: string;
+  instructions: string;
   cooking_time: number;
   difficulty: string;
   image_url?: string;
@@ -17,6 +18,9 @@ interface Recipe {
   average_rating: number;
   total_ratings: number;
   total_likes: number;
+  total_views?: number;
+  servings?: number;
+  cuisine_type?: string;
   created_at: string;
 }
 
@@ -119,7 +123,9 @@ export default function RecipeDiscoveryPage() {
       {recipe.image_url && (
         <div className="w-full h-48 bg-gray-200 overflow-hidden">
           <img 
-            src={recipe.image_url} 
+            src={recipe.image_url.startsWith('http') 
+              ? recipe.image_url 
+              : `http://localhost:8080${recipe.image_url}`}
             alt={recipe.title}
             className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
           />

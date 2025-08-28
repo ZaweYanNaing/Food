@@ -554,21 +554,25 @@ class RecipeController {
                     $dateFilter = 'AND r.created_at >= DATE_SUB(NOW(), INTERVAL 1 WEEK)';
             }
             
-            $query = "SELECT r.*, u.firstName, u.lastName,
-                             GROUP_CONCAT(c.name) as categories,
+            $query = "SELECT r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                             r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                             ct.name as cuisine_type,
+                             u.firstName, u.lastName,
+                             GROUP_CONCAT(DISTINCT c.name) as categories,
                              COALESCE(rr.avg_rating, 0) as average_rating,
                              COALESCE(rr.total_ratings, 0) as total_ratings,
                              COALESCE(rl.total_likes, 0) as total_likes,
                              COALESCE(rv.total_views, 0) as total_views
                       FROM recipes r 
                       LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
                       LEFT JOIN (
                           SELECT recipe_id, 
-                                 AVG(rating) as avg_rating, 
+                                 AVG(CAST(rating AS DECIMAL(3,2))) as avg_rating, 
                                  COUNT(*) as total_ratings
-                          FROM recipe_ratings 
+                          FROM recipe_reviews 
                           GROUP BY recipe_id
                       ) rr ON r.id = rr.recipe_id
                       LEFT JOIN (
@@ -582,7 +586,9 @@ class RecipeController {
                           GROUP BY recipe_id
                       ) rv ON r.id = rv.recipe_id
                       WHERE 1=1 $dateFilter
-                      GROUP BY r.id
+                      GROUP BY r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                               r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                               ct.name, u.firstName, u.lastName
                       ORDER BY (COALESCE(rr.total_ratings, 0) * 0.3 + 
                                COALESCE(rl.total_likes, 0) * 0.4 + 
                                COALESCE(rv.total_views, 0) * 0.3) DESC,
@@ -618,20 +624,24 @@ class RecipeController {
     
     public function getPopularRecipes($limit = 10) {
         try {
-            $query = "SELECT r.*, u.firstName, u.lastName,
-                             GROUP_CONCAT(c.name) as categories,
+            $query = "SELECT r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                             r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                             ct.name as cuisine_type,
+                             u.firstName, u.lastName,
+                             GROUP_CONCAT(DISTINCT c.name) as categories,
                              COALESCE(rr.avg_rating, 0) as average_rating,
                              COALESCE(rr.total_ratings, 0) as total_ratings,
                              COALESCE(rl.total_likes, 0) as total_likes
                       FROM recipes r 
                       LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
                       LEFT JOIN (
                           SELECT recipe_id, 
-                                 AVG(rating) as avg_rating, 
+                                 AVG(CAST(rating AS DECIMAL(3,2))) as avg_rating, 
                                  COUNT(*) as total_ratings
-                          FROM recipe_ratings 
+                          FROM recipe_reviews 
                           GROUP BY recipe_id
                       ) rr ON r.id = rr.recipe_id
                       LEFT JOIN (
@@ -639,7 +649,9 @@ class RecipeController {
                           FROM recipe_likes 
                           GROUP BY recipe_id
                       ) rl ON r.id = rl.recipe_id
-                      GROUP BY r.id
+                      GROUP BY r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                               r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                               ct.name, u.firstName, u.lastName
                       HAVING total_ratings > 0 OR total_likes > 0
                       ORDER BY (COALESCE(rr.total_ratings, 0) * 0.5 + 
                                COALESCE(rl.total_likes, 0) * 0.5) DESC
@@ -673,20 +685,24 @@ class RecipeController {
     
     public function getRecentRecipes($limit = 10) {
         try {
-            $query = "SELECT r.*, u.firstName, u.lastName,
-                             GROUP_CONCAT(c.name) as categories,
+            $query = "SELECT r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                             r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                             ct.name as cuisine_type,
+                             u.firstName, u.lastName,
+                             GROUP_CONCAT(DISTINCT c.name) as categories,
                              COALESCE(rr.avg_rating, 0) as average_rating,
                              COALESCE(rr.total_ratings, 0) as total_ratings,
                              COALESCE(rl.total_likes, 0) as total_likes
                       FROM recipes r 
                       LEFT JOIN users u ON r.user_id = u.id
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
                       LEFT JOIN (
                           SELECT recipe_id, 
-                                 AVG(rating) as avg_rating, 
+                                 AVG(CAST(rating AS DECIMAL(3,2))) as avg_rating, 
                                  COUNT(*) as total_ratings
-                          FROM recipe_ratings 
+                          FROM recipe_reviews 
                           GROUP BY recipe_id
                       ) rr ON r.id = rr.recipe_id
                       LEFT JOIN (
@@ -694,7 +710,9 @@ class RecipeController {
                           FROM recipe_likes 
                           GROUP BY recipe_id
                       ) rl ON r.id = rl.recipe_id
-                      GROUP BY r.id
+                      GROUP BY r.id, r.title, r.description, r.instructions, r.cooking_time, 
+                               r.difficulty, r.image_url, r.user_id, r.created_at, r.servings,
+                               ct.name, u.firstName, u.lastName
                       ORDER BY r.created_at DESC
                       LIMIT :limit";
             

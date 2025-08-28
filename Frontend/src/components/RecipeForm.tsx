@@ -52,7 +52,7 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [, setIngredients] = useState<Ingredient[]>([]);
   const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');

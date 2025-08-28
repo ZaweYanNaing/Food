@@ -296,10 +296,14 @@ class UserController {
     
     public function getUserRecipes($userId) {
         try {
-            // Get all recipes for the user without categories to avoid duplicates
-            $query = "SELECT r.id, r.title, r.description, r.ingredients, r.instructions, 
-                             r.cooking_time, r.difficulty, r.image_url, r.user_id, r.created_at
+            // Get all recipes for the user with user information and cuisine type
+            $query = "SELECT r.id, r.title, r.description, r.instructions, 
+                             r.cooking_time, r.difficulty, r.image_url, r.user_id, r.created_at,
+                             r.servings, ct.name as cuisine_type,
+                             u.firstName, u.lastName
                       FROM recipes r 
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
+                      JOIN users u ON r.user_id = u.id 
                       WHERE r.user_id = :user_id 
                       ORDER BY r.created_at DESC";
             $stmt = $this->db->prepare($query);
@@ -311,7 +315,33 @@ class UserController {
             // Debug logging
             error_log("getUserRecipes: Found " . count($recipes) . " recipes for user " . $userId);
             
-            // Return recipes as a simple array, not grouped by category
+            // Get ingredients and categories for each recipe
+            foreach ($recipes as &$recipe) {
+                // Get ingredients
+                $ingredientQuery = "SELECT i.name, ri.quantity, ri.unit
+                                   FROM recipe_ingredients ri 
+                                   JOIN ingredients i ON ri.ingredient_id = i.id 
+                                   WHERE ri.recipe_id = :recipe_id";
+                $ingredientStmt = $this->db->prepare($ingredientQuery);
+                $ingredientStmt->bindParam(':recipe_id', $recipe['id']);
+                $ingredientStmt->execute();
+                
+                $ingredients = $ingredientStmt->fetchAll(PDO::FETCH_ASSOC);
+                $recipe['ingredients'] = $ingredients;
+                
+                // Get categories
+                $categoryQuery = "SELECT c.name 
+                                 FROM recipe_categories rc 
+                                 JOIN categories c ON rc.category_id = c.id 
+                                 WHERE rc.recipe_id = :recipe_id";
+                $categoryStmt = $this->db->prepare($categoryQuery);
+                $categoryStmt->bindParam(':recipe_id', $recipe['id']);
+                $categoryStmt->execute();
+                
+                $categories = $categoryStmt->fetchAll(PDO::FETCH_ASSOC);
+                $recipe['categories'] = array_column($categories, 'name');
+            }
+            
             return ['success' => true, 'data' => $recipes];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -320,13 +350,15 @@ class UserController {
     
     public function getUserFavorites($userId) {
         try {
-            // First get the basic recipe information without categories to avoid duplicates
-            $query = "SELECT DISTINCT r.id, r.title, r.description, r.ingredients, r.instructions, 
+            // Get favorite recipes with all necessary information
+            $query = "SELECT DISTINCT r.id, r.title, r.description, r.instructions, 
                              r.cooking_time, r.difficulty, r.image_url, r.user_id, r.created_at,
+                             r.servings, ct.name as cuisine_type,
                              u.firstName, u.lastName, uf.created_at as favorited_at
                       FROM user_favorites uf 
                       JOIN recipes r ON uf.recipe_id = r.id 
                       JOIN users u ON r.user_id = u.id 
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
                       WHERE uf.user_id = :user_id 
                       ORDER BY uf.created_at DESC";
             $stmt = $this->db->prepare($query);
@@ -335,8 +367,21 @@ class UserController {
             
             $favorites = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Now get categories for each recipe separately to avoid duplication
+            // Get ingredients and categories for each recipe
             foreach ($favorites as &$favorite) {
+                // Get ingredients
+                $ingredientQuery = "SELECT i.name, ri.quantity, ri.unit
+                                   FROM recipe_ingredients ri 
+                                   JOIN ingredients i ON ri.ingredient_id = i.id 
+                                   WHERE ri.recipe_id = :recipe_id";
+                $ingredientStmt = $this->db->prepare($ingredientQuery);
+                $ingredientStmt->bindParam(':recipe_id', $favorite['id']);
+                $ingredientStmt->execute();
+                
+                $ingredients = $ingredientStmt->fetchAll(PDO::FETCH_ASSOC);
+                $favorite['ingredients'] = $ingredients;
+                
+                // Get categories
                 $categoryQuery = "SELECT c.name 
                                  FROM recipe_categories rc 
                                  JOIN categories c ON rc.category_id = c.id 
