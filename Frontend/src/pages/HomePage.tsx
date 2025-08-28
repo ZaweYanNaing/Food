@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, Search, TrendingUp, Flame, Clock3 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, MapPin, Users, TrendingUp, Flame, Clock3 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
@@ -26,7 +26,7 @@ interface CookingEvent {
 export default function HomePage() {
   const navigate = useNavigate();
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
+  
   const [trendingRecipes, setTrendingRecipes] = useState<any[]>([]);
   const [popularRecipes, setPopularRecipes] = useState<any[]>([]);
   const [recentRecipes, setRecentRecipes] = useState<any[]>([]);

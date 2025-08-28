@@ -16,11 +16,17 @@ interface Recipe {
   id: number;
   title: string;
   description: string;
-  ingredients: string;
+  ingredients: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+  }> | string;
   instructions: string;
   cooking_time: number;
   difficulty: string;
   categories: string[] | number[];
+  cuisine_type?: string;
+  servings?: number;
   image_url?: string;
 }
 
@@ -30,27 +36,49 @@ interface Category {
   description: string;
 }
 
+interface Ingredient {
+  id: number;
+  name: string;
+  description: string;
+}
+
+interface CuisineType {
+  id: number;
+  name: string;
+  description: string;
+}
+
 export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: RecipeFormProps) {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+  const [cuisineTypes, setCuisineTypes] = useState<CuisineType[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    ingredients: '',
+    ingredients: [] as Array<{
+      name: string;
+      quantity: string;
+      unit: string;
+    }>,
     instructions: '',
     cooking_time: '',
     difficulty: 'Medium',
     categories: [] as number[],
+    cuisine_type: '',
+    servings: '',
     image_url: '',
   });
 
   useEffect(() => {
     if (isOpen) {
       loadCategories();
+      loadIngredients();
+      loadCuisineTypes();
     }
   }, [isOpen]); // Only run when isOpen changes
 
@@ -71,14 +99,29 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
         }
       }
       
+      // Handle ingredients - convert from string to array if needed
+      let ingredientsArray: Array<{name: string; quantity: string; unit: string}> = [];
+      if (Array.isArray(recipe.ingredients)) {
+        ingredientsArray = recipe.ingredients.map(ing => ({
+          name: ing.name,
+          quantity: ing.quantity,
+          unit: ing.unit || ''
+        }));
+      } else if (typeof recipe.ingredients === 'string') {
+        // Convert old string format to array format
+        ingredientsArray = [{ name: recipe.ingredients, quantity: '', unit: '' }];
+      }
+      
       setFormData({
         title: recipe.title,
         description: recipe.description,
-        ingredients: recipe.ingredients,
+        ingredients: ingredientsArray,
         instructions: recipe.instructions,
         cooking_time: recipe.cooking_time.toString(),
         difficulty: recipe.difficulty,
         categories: categoryIds,
+        cuisine_type: recipe.cuisine_type || '',
+        servings: recipe.servings?.toString() || '',
         image_url: recipe.image_url || '',
       });
       
@@ -110,15 +153,39 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
     }
   };
 
+  const loadIngredients = async () => {
+    try {
+      const response = await apiService.getIngredients();
+      if (response.success) {
+        setIngredients(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading ingredients:', error);
+    }
+  };
+
+  const loadCuisineTypes = async () => {
+    try {
+      const response = await apiService.getCuisineTypes();
+      if (response.success) {
+        setCuisineTypes(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading cuisine types:', error);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       title: '',
       description: '',
-      ingredients: '',
+      ingredients: [],
       instructions: '',
       cooking_time: '',
       difficulty: 'Medium',
       categories: [],
+      cuisine_type: '',
+      servings: '',
       image_url: '',
     });
     setImageFile(null);
@@ -201,8 +268,8 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
       toast.error('Recipe title is required');
       return;
     }
-    if (!formData.ingredients.trim()) {
-      toast.error('Ingredients are required');
+    if (!formData.ingredients.length) {
+      toast.error('At least one ingredient is required');
       return;
     }
     if (!formData.instructions.trim()) {
@@ -239,6 +306,7 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
       const recipeData = {
         ...formData,
         cooking_time: formData.cooking_time ? parseInt(formData.cooking_time) : undefined,
+        servings: formData.servings ? parseInt(formData.servings) : undefined,
         user_id: user.id,
         image_url: finalImageUrl,
       };
@@ -398,6 +466,44 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
             </div>
           </div>
 
+          {/* Cuisine Types */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Cuisine Type
+            </label>
+            <select
+              id="cuisine_type"
+              name="cuisine_type"
+              value={formData.cuisine_type}
+              onChange={handleInputChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              disabled={isLoading}
+            >
+              <option value="">Select Cuisine Type</option>
+              {cuisineTypes.map(cuisineType => (
+                <option key={cuisineType.id} value={cuisineType.name}>{cuisineType.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Servings */}
+          <div>
+            <label htmlFor="servings" className="block text-sm font-medium text-gray-700 mb-2">
+              Number of Servings
+            </label>
+            <input
+              type="number"
+              id="servings"
+              name="servings"
+              value={formData.servings}
+              onChange={handleInputChange}
+              min="1"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+              placeholder="e.g., 4"
+              disabled={isLoading}
+            />
+          </div>
+
           {/* Image Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -458,20 +564,62 @@ export default function RecipeForm({ isOpen, onClose, recipe, onSuccess }: Recip
             <label htmlFor="ingredients" className="block text-sm font-medium text-gray-700 mb-2">
               Ingredients *
             </label>
-            <textarea
-              id="ingredients"
-              name="ingredients"
-              value={formData.ingredients}
-              onChange={handleInputChange}
-              rows={6}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-              placeholder="List all ingredients, one per line or separated by commas"
-              required
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {formData.ingredients.map((ingredient, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    name={`ingredient_${index}_name`}
+                    value={ingredient.name}
+                    onChange={(e) => {
+                      const newIngredients = [...formData.ingredients];
+                      newIngredients[index] = { ...newIngredients[index], name: e.target.value };
+                      setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Ingredient name"
+                    required
+                    disabled={isLoading}
+                  />
+                  <input
+                    type="number"
+                    name={`ingredient_${index}_quantity`}
+                    value={ingredient.quantity}
+                    onChange={(e) => {
+                      const newIngredients = [...formData.ingredients];
+                      newIngredients[index] = { ...newIngredients[index], quantity: e.target.value };
+                      setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Quantity"
+                    disabled={isLoading}
+                  />
+                  <input
+                    type="text"
+                    name={`ingredient_${index}_unit`}
+                    value={ingredient.unit}
+                    onChange={(e) => {
+                      const newIngredients = [...formData.ingredients];
+                      newIngredients[index] = { ...newIngredients[index], unit: e.target.value };
+                      setFormData(prev => ({ ...prev, ingredients: newIngredients }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Unit"
+                    disabled={isLoading}
+                  />
+
+                </div>
+              ))}
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setFormData(prev => ({ ...prev, ingredients: [...prev.ingredients, { name: '', quantity: '', unit: '' }] }))}
               disabled={isLoading}
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              List ingredients with quantities and measurements
-            </p>
+              className="mt-4"
+            >
+              Add Ingredient
+            </Button>
           </div>
 
           {/* Instructions */}

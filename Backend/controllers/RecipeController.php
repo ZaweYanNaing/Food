@@ -35,15 +35,20 @@ class RecipeController {
                 $params[':user_id'] = $filters['user_id'];
             }
             
-            $query = "SELECT r.*, u.firstName, u.lastName, 
-                             GROUP_CONCAT(c.name) as categories
-                      FROM recipes r 
-                      LEFT JOIN users u ON r.user_id = u.id
-                      LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
-                      LEFT JOIN categories c ON rc.category_id = c.id
-                      $whereClause
-                      GROUP BY r.id
-                      ORDER BY r.created_at DESC";
+                        $query = "SELECT r.*, u.firstName, u.lastName, 
+                                  GROUP_CONCAT(DISTINCT c.name) as categories,
+                                  ct.name as cuisine_type,
+                                  GROUP_CONCAT(DISTINCT CONCAT(i.name, ':', ri.quantity, ' ', ri.unit) SEPARATOR '|') as ingredients
+                            FROM recipes r 
+                            LEFT JOIN users u ON r.user_id = u.id
+                            LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
+                            LEFT JOIN categories c ON rc.category_id = c.id
+                            LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
+                            LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+                            LEFT JOIN ingredients i ON ri.ingredient_id = i.id
+                            $whereClause
+                            GROUP BY r.id
+                            ORDER BY r.created_at DESC";
             
             $stmt = $this->db->prepare($query);
             foreach ($params as $key => $value) {
@@ -53,12 +58,35 @@ class RecipeController {
             
             $recipes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             
-            // Process categories string to array
+            // Process categories, cuisine types, and ingredients strings to arrays
             foreach ($recipes as &$recipe) {
                 if ($recipe['categories']) {
                     $recipe['categories'] = explode(',', $recipe['categories']);
                 } else {
                     $recipe['categories'] = [];
+                }
+                
+                if ($recipe['cuisine_type']) {
+                    $recipe['cuisine_type'] = $recipe['cuisine_type'];
+                } else {
+                    $recipe['cuisine_type'] = null;
+                }
+                
+                if ($recipe['ingredients']) {
+                    $ingredientsArray = [];
+                    $ingredientParts = explode('|', $recipe['ingredients']);
+                    foreach ($ingredientParts as $part) {
+                        if (strpos($part, ':') !== false) {
+                            list($name, $quantity) = explode(':', $part, 2);
+                            $ingredientsArray[] = [
+                                'name' => $name,
+                                'quantity' => $quantity
+                            ];
+                        }
+                    }
+                    $recipe['ingredients'] = $ingredientsArray;
+                } else {
+                    $recipe['ingredients'] = [];
                 }
             }
             
@@ -71,13 +99,17 @@ class RecipeController {
     public function getRecipeById($id) {
         try {
             $query = "SELECT r.*, u.firstName, u.lastName,
-                             GROUP_CONCAT(c.name) as categories
+                             GROUP_CONCAT(DISTINCT c.name) as categories,
+                             ct.name as cuisine_type,
+                             GROUP_CONCAT(DISTINCT CONCAT(i.name, ':', ri.quantity, ' ', ri.unit) SEPARATOR '|') as ingredients
                       FROM recipes r 
                       LEFT JOIN users u ON r.user_id = u.id
                       LEFT JOIN recipe_categories rc ON r.id = rc.recipe_id
                       LEFT JOIN categories c ON rc.category_id = c.id
-                      WHERE r.id = :id
-                      GROUP BY r.id";
+                      LEFT JOIN cuisine_types ct ON r.cuisine_type_id = ct.id
+                      LEFT JOIN recipe_ingredients ri ON r.id = ri.recipe_id
+                      LEFT JOIN ingredients i ON ri.ingredient_id = i.id
+                      WHERE r.id = :id";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':id', $id);
@@ -86,11 +118,34 @@ class RecipeController {
             $recipe = $stmt->fetch(PDO::FETCH_ASSOC);
             
             if ($recipe) {
-                // Process categories
+                // Process categories, cuisine types, and ingredients
                 if ($recipe['categories']) {
                     $recipe['categories'] = explode(',', $recipe['categories']);
                 } else {
                     $recipe['categories'] = [];
+                }
+                
+                if ($recipe['cuisine_type']) {
+                    $recipe['cuisine_type'] = $recipe['cuisine_type'];
+                } else {
+                    $recipe['cuisine_type'] = null;
+                }
+                
+                if ($recipe['ingredients']) {
+                    $ingredientsArray = [];
+                    $ingredientParts = explode('|', $recipe['ingredients']);
+                    foreach ($ingredientParts as $part) {
+                        if (strpos($part, ':') !== false) {
+                            list($name, $quantity) = explode(':', $part, 2);
+                            $ingredientsArray[] = [
+                                'name' => $name,
+                                'quantity' => $quantity
+                            ];
+                        }
+                    }
+                    $recipe['ingredients'] = $ingredientsArray;
+                } else {
+                    $recipe['ingredients'] = [];
                 }
                 
                 return ['success' => true, 'data' => $recipe];
@@ -112,25 +167,56 @@ class RecipeController {
             // Start transaction
             $this->db->beginTransaction();
             
-            // Insert recipe
-            $query = "INSERT INTO recipes (title, description, ingredients, instructions, cooking_time, difficulty, user_id, image_url, created_at) 
-                      VALUES (:title, :description, :ingredients, :instructions, :cooking_time, :difficulty, :user_id, :image_url, NOW())";
+            // Insert recipe (without ingredients field)
+            $query = "INSERT INTO recipes (title, description, instructions, cooking_time, difficulty, user_id, image_url, servings, created_at) 
+                      VALUES (:title, :description, :instructions, :cooking_time, :difficulty, :user_id, :image_url, :servings, NOW())";
             
             $stmt = $this->db->prepare($query);
             $stmt->bindValue(':title', $data['title']);
             $stmt->bindValue(':description', $data['description'] ?? '');
-            $stmt->bindValue(':ingredients', $data['ingredients']);
             $stmt->bindValue(':instructions', $data['instructions']);
             $stmt->bindValue(':cooking_time', $data['cooking_time'] ?? null);
             $stmt->bindValue(':difficulty', $data['difficulty'] ?? 'Medium');
             $stmt->bindValue(':user_id', $data['user_id']);
             $stmt->bindValue(':image_url', $data['image_url'] ?? null);
+            $stmt->bindValue(':servings', $data['servings'] ?? null);
             
             if (!$stmt->execute()) {
                 throw new Exception('Failed to create recipe');
             }
             
             $recipeId = $this->db->lastInsertId();
+            
+            // Handle ingredients
+            if (!empty($data['ingredients']) && is_array($data['ingredients'])) {
+                foreach ($data['ingredients'] as $ingredient) {
+                    // Check if ingredient exists, if not create it
+                    $ingredientId = $this->getOrCreateIngredient($ingredient['name']);
+                    
+                    // Insert recipe-ingredient relationship
+                    $ingQuery = "INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit) 
+                                VALUES (:recipe_id, :ingredient_id, :quantity, :unit)";
+                    $ingStmt = $this->db->prepare($ingQuery);
+                    $ingStmt->bindValue(':recipe_id', $recipeId);
+                    $ingStmt->bindValue(':ingredient_id', $ingredientId);
+                    $ingStmt->bindValue(':quantity', $ingredient['quantity']);
+                    $ingStmt->bindValue(':unit', $ingredient['unit'] ?? '');
+                    $ingStmt->execute();
+                }
+            }
+            
+            // Handle cuisine type
+            if (!empty($data['cuisine_type'])) {
+                // Check if cuisine type exists, if not create it
+                $cuisineTypeId = $this->getOrCreateCuisineType($data['cuisine_type']);
+                
+                // Update recipe with cuisine type
+                $cuisineQuery = "UPDATE recipes SET cuisine_type_id = :cuisine_type_id WHERE id = :recipe_id";
+                $cuisineStmt = $this->db->prepare($cuisineQuery);
+                $cuisineStmt->bindValue(':cuisine_type_id', $cuisineTypeId);
+                $cuisineStmt->bindValue(':recipe_id', $recipeId);
+                $cuisineStmt->execute();
+            }
             
             // Handle categories
             if (!empty($data['categories']) && is_array($data['categories'])) {
@@ -189,10 +275,10 @@ class RecipeController {
             $query = "UPDATE recipes SET 
                       title = :title, 
                       description = :description, 
-                      ingredients = :ingredients, 
                       instructions = :instructions, 
                       cooking_time = :cooking_time, 
                       difficulty = :difficulty, 
+                      servings = :servings,
                       image_url = :image_url,
                       updated_at = NOW()
                       WHERE id = :id";
@@ -200,15 +286,63 @@ class RecipeController {
             $stmt = $this->db->prepare($query);
             $stmt->bindValue(':title', $data['title']);
             $stmt->bindValue(':description', $data['description'] ?? '');
-            $stmt->bindValue(':ingredients', $data['ingredients']);
             $stmt->bindValue(':instructions', $data['instructions']);
             $stmt->bindValue(':cooking_time', $data['cooking_time'] ?? null);
             $stmt->bindValue(':difficulty', $data['difficulty'] ?? 'Medium');
+            $stmt->bindValue(':servings', $data['servings'] ?? null);
             $stmt->bindValue(':image_url', $data['image_url'] ?? null);
             $stmt->bindValue(':id', $id);
             
             if (!$stmt->execute()) {
                 throw new Exception('Failed to update recipe');
+            }
+            
+            // Update ingredients
+            if (isset($data['ingredients'])) {
+                // Remove existing ingredients
+                $deleteIngQuery = "DELETE FROM recipe_ingredients WHERE recipe_id = :recipe_id";
+                $deleteIngStmt = $this->db->prepare($deleteIngQuery);
+                $deleteIngStmt->bindParam(':recipe_id', $id);
+                $deleteIngStmt->execute();
+                
+                // Add new ingredients
+                if (is_array($data['ingredients'])) {
+                    foreach ($data['ingredients'] as $ingredient) {
+                        // Check if ingredient exists, if not create it
+                        $ingredientId = $this->getOrCreateIngredient($ingredient['name']);
+                        
+                        // Insert recipe-ingredient relationship
+                        $ingQuery = "INSERT INTO recipe_ingredients (recipe_id, ingredient_id, quantity, unit) 
+                                    VALUES (:recipe_id, :ingredient_id, :quantity, :unit)";
+                        $ingStmt = $this->db->prepare($ingQuery);
+                        $ingStmt->bindValue(':recipe_id', $id);
+                        $ingStmt->bindValue(':ingredient_id', $ingredientId);
+                        $ingStmt->bindValue(':quantity', $ingredient['quantity']);
+                        $ingStmt->bindValue(':unit', $ingredient['unit'] ?? '');
+                        $ingStmt->execute();
+                    }
+                }
+            }
+            
+            // Update cuisine type
+            if (isset($data['cuisine_type'])) {
+                if (!empty($data['cuisine_type'])) {
+                    // Check if cuisine type exists, if not create it
+                    $cuisineTypeId = $this->getOrCreateCuisineType($data['cuisine_type']);
+                    
+                    // Update recipe with cuisine type
+                    $cuisineQuery = "UPDATE recipes SET cuisine_type_id = :cuisine_type_id WHERE id = :recipe_id";
+                    $cuisineStmt = $this->db->prepare($cuisineQuery);
+                    $cuisineStmt->bindValue(':cuisine_type_id', $cuisineTypeId);
+                    $cuisineStmt->bindValue(':recipe_id', $id);
+                    $cuisineStmt->execute();
+                } else {
+                    // Remove cuisine type
+                    $cuisineQuery = "UPDATE recipes SET cuisine_type_id = NULL WHERE id = :recipe_id";
+                    $cuisineStmt = $this->db->prepare($cuisineQuery);
+                    $cuisineStmt->bindValue(':recipe_id', $id);
+                    $cuisineStmt->execute();
+                }
             }
             
             // Update categories
@@ -592,11 +726,11 @@ class RecipeController {
     
     public function getCuisineTypes() {
         try {
-            $query = "SELECT DISTINCT cuisine_type FROM recipes WHERE cuisine_type IS NOT NULL AND cuisine_type != '' ORDER BY cuisine_type";
+            $query = "SELECT id, name, description FROM cuisine_types ORDER BY name ASC";
             $stmt = $this->db->prepare($query);
             $stmt->execute();
             
-            $cuisineTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
+            $cuisineTypes = $stmt->fetchAll(PDO::FETCH_ASSOC);
             return ['success' => true, 'data' => $cuisineTypes];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
@@ -604,13 +738,18 @@ class RecipeController {
     }
     
     public function getDifficultyLevels() {
+        return ['success' => true, 'data' => ['Easy', 'Medium', 'Hard']];
+    }
+    
+    public function getIngredients() {
         try {
-            $query = "SELECT DISTINCT difficulty FROM recipes WHERE difficulty IS NOT NULL AND difficulty != '' ORDER BY difficulty";
+            $query = "SELECT id, name FROM ingredients ORDER BY name ASC";
             $stmt = $this->db->prepare($query);
             $stmt->execute();
             
-            $difficulties = $stmt->fetchAll(PDO::FETCH_COLUMN);
-            return ['success' => true, 'data' => $difficulties];
+            $ingredients = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            
+            return ['success' => true, 'data' => $ingredients];
         } catch (Exception $e) {
             return ['success' => false, 'error' => $e->getMessage()];
         }
@@ -661,6 +800,64 @@ class RecipeController {
         } catch (Exception $e) {
             // Log error but don't fail the main operation
             error_log("Failed to log user activity: " . $e->getMessage());
+        }
+    }
+    
+    /**
+     * Get or create an ingredient
+     */
+    private function getOrCreateIngredient($name) {
+        try {
+            // First try to find existing ingredient
+            $query = "SELECT id FROM ingredients WHERE name = :name";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':name', $name);
+            $stmt->execute();
+            
+            $ingredient = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($ingredient) {
+                return $ingredient['id'];
+            }
+            
+            // Create new ingredient if it doesn't exist
+            $insertQuery = "INSERT INTO ingredients (name) VALUES (:name)";
+            $insertStmt = $this->db->prepare($insertQuery);
+            $insertStmt->bindParam(':name', $name);
+            $insertStmt->execute();
+            
+            return $this->db->lastInsertId();
+        } catch (Exception $e) {
+            error_log("Error in getOrCreateIngredient: " . $e->getMessage());
+            throw $e;
+        }
+    }
+    
+    /**
+     * Get or create a cuisine type
+     */
+    private function getOrCreateCuisineType($name) {
+        try {
+            // First try to find existing cuisine type
+            $query = "SELECT id FROM cuisine_types WHERE name = :name";
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':name', $name);
+            $stmt->execute();
+            
+            $cuisineType = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($cuisineType) {
+                return $cuisineType['id'];
+            }
+            
+            // Create new cuisine type if it doesn't exist
+            $insertQuery = "INSERT INTO cuisine_types (name) VALUES (:name)";
+            $insertStmt = $this->db->prepare($insertQuery);
+            $insertStmt->bindParam(':name', $name);
+            $insertStmt->execute();
+            
+            return $this->db->lastInsertId();
+        } catch (Exception $e) {
+            error_log("Error in getOrCreateCuisineType: " . $e->getMessage());
+            throw $e;
         }
     }
 }

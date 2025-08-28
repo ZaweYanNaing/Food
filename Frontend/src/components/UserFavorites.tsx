@@ -16,6 +16,8 @@ interface FavoriteRecipe {
   firstName: string;
   lastName: string;
   category_name?: string;
+  cuisine_type?: string;
+  servings?: number;
   created_at: string;
 }
 
@@ -189,7 +191,9 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
             {recipe.image_url && (
               <div className="w-full h-48 bg-gray-200 overflow-hidden">
                 <img 
-                  src={recipe.image_url} 
+                  src={recipe.image_url.startsWith('http') 
+                    ? recipe.image_url 
+                    : `http://localhost:8080${recipe.image_url}`}
                   alt={recipe.title}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
                 />
@@ -276,7 +280,9 @@ export default function UserFavorites({ userId }: UserFavoritesProps) {
               {selectedRecipe.image_url && (
                 <div className="mb-6">
                   <img
-                    src={selectedRecipe.image_url}
+                    src={selectedRecipe.image_url.startsWith('http') 
+                      ? selectedRecipe.image_url 
+                      : `http://localhost:8080${selectedRecipe.image_url}`}
                     alt={selectedRecipe.title}
                     className="w-full h-64 object-cover rounded-lg"
                   />

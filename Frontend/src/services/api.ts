@@ -172,11 +172,17 @@ class ApiService {
   async createRecipe(recipeData: {
     title: string;
     description?: string;
-    ingredients: string;
+    ingredients: Array<{
+      name: string;
+      quantity: string;
+      unit?: string;
+    }>;
     instructions: string;
     cooking_time?: number;
     difficulty?: string;
     categories?: number[];
+    cuisine_type?: string;
+    servings?: number;
     image_url?: string;
   }): Promise<ApiResponse> {
     return this.request('/recipes', {
@@ -188,11 +194,17 @@ class ApiService {
   async updateRecipe(id: number, recipeData: {
     title: string;
     description?: string;
-    ingredients: string;
+    ingredients: Array<{
+      name: string;
+      quantity: string;
+      unit?: string;
+    }>;
     instructions: string;
     cooking_time?: number;
     difficulty?: string;
     categories?: number[];
+    cuisine_type?: string;
+    servings?: number;
     image_url?: string;
   }): Promise<ApiResponse> {
     return this.request(`/recipes/${id}`, {
@@ -345,6 +357,16 @@ class ApiService {
     } catch (error) {
       console.error('Error getting difficulty levels:', error);
       return { success: false, message: 'Failed to get difficulty levels' };
+    }
+  }
+
+  async getIngredients(): Promise<ApiResponse> {
+    try {
+      const response = await this.request('/recipes/ingredients');
+      return response;
+    } catch (error) {
+      console.error('Error getting ingredients:', error);
+      return { success: false, message: 'Failed to get ingredients' };
     }
   }
 }

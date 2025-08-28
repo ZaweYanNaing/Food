@@ -5,9 +5,15 @@ interface Recipe {
   id: number;
   title: string;
   description: string;
-  ingredients: string;
+  ingredients: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+  }> | string;
   difficulty: string;
   cooking_time: number;
+  servings?: number;
+  cuisine_type?: string;
   created_at: string;
 }
 
@@ -136,8 +142,25 @@ const RecipeList: React.FC = () => {
                 
                 <div className="text-sm text-gray-500">
                   <p><strong>Ingredients:</strong></p>
-                  <p className="line-clamp-2">{recipe.ingredients}</p>
+                  <p className="line-clamp-2">
+                    {Array.isArray(recipe.ingredients) 
+                      ? recipe.ingredients.map(ing => `${ing.name} ${ing.quantity}`).join(', ')
+                      : recipe.ingredients
+                    }
+                  </p>
                 </div>
+                
+                {recipe.cuisine_type && (
+                  <div className="text-sm text-gray-500 mt-2">
+                    <p><strong>Cuisine:</strong> {recipe.cuisine_type}</p>
+                  </div>
+                )}
+                
+                {recipe.servings && (
+                  <div className="text-sm text-gray-500 mt-2">
+                    <p><strong>Servings:</strong> {recipe.servings}</p>
+                  </div>
+                )}
                 
                 <div className="mt-4 pt-4 border-t border-gray-200">
                   <p className="text-xs text-gray-400">

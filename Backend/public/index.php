@@ -95,6 +95,14 @@ try {
             }
             break;
             
+        case '/recipes/ingredients':
+            if ($method === 'GET') {
+                $controller = new RecipeController();
+                $result = $controller->getIngredients();
+                echo json_encode($result);
+            }
+            break;
+            
         case '/recipes/difficulty-levels':
             if ($method === 'GET') {
                 $controller = new RecipeController();

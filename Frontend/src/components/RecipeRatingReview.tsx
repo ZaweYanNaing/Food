@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, MessageSquare, Heart, ThumbsUp } from 'lucide-react';
+import { Star, MessageSquare } from 'lucide-react';
 import { Button } from './ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
@@ -27,9 +27,9 @@ interface RatingStats {
   total_ratings: number;
 }
 
-export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: RecipeRatingReviewProps) {
+export default function RecipeRatingReview({ recipeId, onUpdate }: RecipeRatingReviewProps) {
   const { user } = useAuth();
-  const [isLiked, setIsLiked] = useState(false);
+  
   const [userRating, setUserRating] = useState<number | null>(null);
   const [userReview, setUserReview] = useState('');
   const [reviews, setReviews] = useState<Review[]>([]);
@@ -61,7 +61,7 @@ export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: 
       // Load user's status for this recipe
       const statusResponse = await apiService.getUserRecipeStatus(user!.id, recipeId);
       if (statusResponse.success) {
-        setIsLiked(statusResponse.data.isLiked);
+        
         setUserRating(statusResponse.data.userRating);
         setUserReview(statusResponse.data.userReview || '');
       }
@@ -72,29 +72,7 @@ export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: 
     }
   };
 
-  const handleLikeToggle = async () => {
-    if (!user) {
-      toast.error('You must be logged in to like recipes');
-      return;
-    }
-
-    try {
-      setIsSubmitting(true);
-      const response = await apiService.toggleRecipeLike(user.id, recipeId);
-      
-      if (response.success) {
-        setIsLiked(response.data.isLiked);
-        toast.success(response.message);
-        onUpdate?.();
-      } else {
-        toast.error(response.message || 'Failed to update like');
-      }
-    } catch (error) {
-      toast.error('Error updating like');
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  
 
   const handleRatingChange = async (rating: number) => {
     if (!user) {
@@ -176,19 +154,8 @@ export default function RecipeRatingReview({ recipeId, recipeTitle, onUpdate }: 
       {/* Recipe Actions */}
       <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
         <div className="flex items-center space-x-6">
-          {/* Like Button */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleLikeToggle}
-            disabled={isSubmitting}
-            className={`flex items-center space-x-2 ${
-              isLiked ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'
-            }`}
-          >
-            <Heart className={`w-5 h-5 ${isLiked ? 'fill-current' : ''}`} />
-            <span>{isLiked ? 'Liked' : 'Like'}</span>
-          </Button>
+          
+         
 
           {/* Rating Display */}
           <div className="flex items-center space-x-2">

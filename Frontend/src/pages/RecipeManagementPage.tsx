@@ -557,7 +557,9 @@ export default function RecipeManagementPage() {
               {selectedRecipe.image_url && (
                 <div className="mb-6">
                   <img
-                    src={selectedRecipe.image_url}
+                    src={selectedRecipe.image_url.startsWith('http') 
+                      ? selectedRecipe.image_url 
+                      : `http://localhost:8080${selectedRecipe.image_url}`}
                     alt={selectedRecipe.title}
                     className="w-full h-64 object-cover rounded-lg"
                   />
@@ -598,7 +600,23 @@ export default function RecipeManagementPage() {
               <div className="mb-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Ingredients</h3>
                 <div className="bg-gray-50 p-4 rounded-lg">
-                  <pre className="whitespace-pre-wrap text-gray-700 font-sans">{selectedRecipe.ingredients}</pre>
+                  {Array.isArray(selectedRecipe.ingredients) ? (
+                    <ul className="space-y-2">
+                      {selectedRecipe.ingredients.map((ingredient, index) => (
+                        <li key={index} className="flex items-center space-x-2">
+                          <span className="text-gray-700 font-medium">
+                            {ingredient.name}
+                          </span>
+                                                  <span className="text-gray-600">
+                          {ingredient.quantity}
+                          {ingredient.unit && ` ${ingredient.unit}`}
+                        </span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <pre className="whitespace-pre-wrap text-gray-700 font-sans">{selectedRecipe.ingredients}</pre>
+                  )}
                 </div>
               </div>
 

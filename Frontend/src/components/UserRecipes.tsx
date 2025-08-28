@@ -9,12 +9,18 @@ interface Recipe {
   id: number;
   title: string;
   description: string;
-  ingredients: string;
+  ingredients: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+  }> | string;
   instructions: string;
   cooking_time: number;
   difficulty: string;
   image_url?: string;
   categories: string[];
+  cuisine_type?: string;
+  servings?: number;
   user_id: number;
   firstName: string;
   lastName: string;

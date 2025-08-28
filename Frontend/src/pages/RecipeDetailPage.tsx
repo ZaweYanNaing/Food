@@ -1,22 +1,28 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, User, Heart, Star, Home } from 'lucide-react';
+import { ArrowLeft, User, Star, Home } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import RecipeRatingReview from '../components/RecipeRatingReview';
-import { toast } from 'react-toastify';
+
 
 interface Recipe {
   id: number;
   title: string;
   description: string;
-  ingredients: string;
+  ingredients: Array<{
+    name: string;
+    quantity: string;
+    unit?: string;
+  }> | string;
   instructions: string;
   cooking_time: number;
   difficulty: string;
   image_url?: string;
   categories: string[];
+  cuisine_type?: string;
+  servings?: number;
   user_id: number;
   firstName: string;
   lastName: string;
@@ -30,16 +36,12 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isFavorited, setIsFavorited] = useState(false);
 
   useEffect(() => {
     if (id) {
       loadRecipe();
-      if (user) {
-        checkFavoriteStatus();
-      }
     }
-  }, [id, user]);
+  }, [id]);
 
   const loadRecipe = async () => {
     try {
@@ -58,36 +60,9 @@ export default function RecipeDetailPage() {
     }
   };
 
-  const checkFavoriteStatus = async () => {
-    try {
-      const response = await apiService.getUserFavorites(user!.id);
-      if (response.success && response.data) {
-        const isFav = response.data.some((fav: any) => fav.id === parseInt(id!));
-        setIsFavorited(isFav);
-      }
-    } catch (error) {
-      console.error('Error checking favorite status:', error);
-    }
-  };
 
-  const handleToggleFavorite = async () => {
-    if (!user) {
-      toast.error('You must be logged in to add favorites');
-      return;
-    }
 
-    try {
-      const response = await apiService.toggleFavorite(user.id, parseInt(id!));
-      if (response.success) {
-        setIsFavorited(response.data.isFavorited);
-        toast.success(response.message);
-      } else {
-        toast.error(response.message || 'Failed to update favorites');
-      }
-    } catch (error) {
-      toast.error('Error updating favorites');
-    }
-  };
+
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
@@ -146,20 +121,7 @@ export default function RecipeDetailPage() {
               <span>Back</span>
             </Button>
             
-            <div className="flex items-center space-x-3">
-              {user && (
-                <Button
-                  variant="ghost"
-                  onClick={handleToggleFavorite}
-                  className={`flex items-center space-x-2 ${
-                    isFavorited ? 'text-red-500 hover:text-red-600' : 'text-gray-500 hover:text-red-500'
-                  }`}
-                >
-                  <Heart className={`w-5 h-5 ${isFavorited ? 'fill-current' : ''}`} />
-                  <span>{isFavorited ? 'Favorited' : 'Favorite'}</span>
-                </Button>
-              )}
-            </div>
+            
           </div>
         </div>
       </div>
@@ -177,7 +139,7 @@ export default function RecipeDetailPage() {
               )}
 
               {/* Recipe Stats */}
-              <div className="grid grid-cols-3 gap-4 mb-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
                 <div className="text-center p-4 bg-gray-50 rounded-lg">
                   <div className="text-2xl font-bold text-[#78C841]">
                     {formatCookingTime(recipe.cooking_time)}
@@ -190,12 +152,22 @@ export default function RecipeDetailPage() {
                   </div>
                   <div className="text-sm text-gray-600">Difficulty</div>
                 </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {recipe.categories?.length || 0}
+                {recipe.servings && (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {recipe.servings}
+                    </div>
+                    <div className="text-sm text-gray-600">Servings</div>
                   </div>
-                  <div className="text-sm text-gray-600">Categories</div>
-                </div>
+                )}
+                {recipe.cuisine_type && (
+                  <div className="text-center p-4 bg-gray-50 rounded-lg">
+                    <div className="text-lg font-bold text-purple-600">
+                      {recipe.cuisine_type}
+                    </div>
+                    <div className="text-sm text-gray-600">Cuisine</div>
+                  </div>
+                )}
               </div>
 
               {/* Categories */}
@@ -220,7 +192,9 @@ export default function RecipeDetailPage() {
             {recipe.image_url && (
               <div className="bg-white rounded-lg shadow-md overflow-hidden">
                 <img
-                  src={recipe.image_url}
+                  src={recipe.image_url.startsWith('http') 
+                    ? recipe.image_url 
+                    : `http://localhost:8080${recipe.image_url}`}
                   alt={recipe.title}
                   className="w-full h-96 object-cover"
                 />
@@ -231,9 +205,25 @@ export default function RecipeDetailPage() {
             <div className="bg-white rounded-lg shadow-md p-6">
               <h2 className="text-2xl font-bold text-gray-900 mb-4">Ingredients</h2>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <pre className="whitespace-pre-wrap text-gray-700 font-sans text-sm leading-relaxed">
-                  {recipe.ingredients}
-                </pre>
+                {Array.isArray(recipe.ingredients) ? (
+                  <ul className="space-y-2">
+                    {recipe.ingredients.map((ingredient, index) => (
+                      <li key={index} className="flex items-center space-x-2">
+                        <span className="text-gray-700 font-medium">
+                          {ingredient.name}
+                        </span>
+                        <span className="text-gray-600">
+                          {ingredient.quantity}
+                          {ingredient.unit && ` ${ingredient.unit}`}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <pre className="whitespace-pre-wrap text-gray-700 font-sans text-sm leading-relaxed">
+                    {recipe.ingredients}
+                  </pre>
+                )}
               </div>
             </div>
 
