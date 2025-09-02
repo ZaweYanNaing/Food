@@ -28,6 +28,10 @@ interface Recipe {
   firstName: string;
   lastName: string;
   created_at: string;
+  average_rating?: number;
+  total_ratings?: number;
+  total_likes?: number;
+  total_views?: number;
 }
 
 interface Category {
@@ -397,7 +401,7 @@ export default function RecipeManagementPage() {
                     {/* Favorite Button */}
                     {user && (
                       <Tooltip>
-                        <TooltipTrigger>
+                        <TooltipTrigger asChild>
                         <Button
                           variant="ghost"
                           size="lg"
@@ -438,6 +442,12 @@ export default function RecipeManagementPage() {
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(recipe.difficulty)}`}>
                         {recipe.difficulty}
                       </span>
+                      {recipe.total_views && recipe.total_views > 0 && (
+                        <span className="text-sm text-blue-500 flex items-center">
+                          <Eye className="w-4 h-4 mr-1" />
+                          {recipe.total_views}
+                        </span>
+                      )}
                     </div>
                   </div>
 

@@ -878,5 +878,78 @@ class RecipeController {
             throw $e;
         }
     }
+    
+    /**
+     * Track a recipe view
+     */
+    public function trackRecipeView($recipeId, $userId = null) {
+        try {
+            // Get client IP address
+            $ipAddress = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+            if (isset($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+                $ipAddress = $_SERVER['HTTP_X_FORWARDED_FOR'];
+            } elseif (isset($_SERVER['HTTP_X_REAL_IP'])) {
+                $ipAddress = $_SERVER['HTTP_X_REAL_IP'];
+            }
+            
+            // Debug logging
+            error_log("Tracking view - Recipe ID: $recipeId, User ID: " . ($userId ?? 'NULL') . ", IP: $ipAddress");
+            
+            // Check if this is a duplicate view (same user/IP within last 5 minutes)
+            if ($userId) {
+                // For logged-in users, check by user_id
+                $duplicateCheck = "SELECT id FROM recipe_views 
+                                  WHERE recipe_id = :recipe_id 
+                                  AND user_id = :user_id
+                                  AND viewed_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+                                  LIMIT 1";
+                $checkStmt = $this->db->prepare($duplicateCheck);
+                $checkStmt->bindParam(':recipe_id', $recipeId);
+                $checkStmt->bindParam(':user_id', $userId);
+            } else {
+                // For anonymous users, check by IP address
+                $duplicateCheck = "SELECT id FROM recipe_views 
+                                  WHERE recipe_id = :recipe_id 
+                                  AND user_id IS NULL
+                                  AND ip_address = :ip_address
+                                  AND viewed_at > DATE_SUB(NOW(), INTERVAL 5 MINUTE)
+                                  LIMIT 1";
+                $checkStmt = $this->db->prepare($duplicateCheck);
+                $checkStmt->bindParam(':recipe_id', $recipeId);
+                $checkStmt->bindParam(':ip_address', $ipAddress);
+                error_log("Checking for anonymous duplicate - Recipe: $recipeId, IP: $ipAddress");
+            }
+            $checkStmt->execute();
+            
+            $duplicateResult = $checkStmt->fetch();
+            if ($duplicateResult) {
+                // Duplicate view within 5 minutes, don't count
+                error_log("Duplicate view detected - not counting. Found ID: " . $duplicateResult['id']);
+                return ['success' => true, 'message' => 'View not counted (duplicate)'];
+            }
+            
+            error_log("No duplicate found, proceeding with insert");
+            
+            // Insert new view
+            $query = "INSERT INTO recipe_views (recipe_id, user_id, ip_address, viewed_at) 
+                      VALUES (:recipe_id, :user_id, :ip_address, NOW())";
+            
+            $stmt = $this->db->prepare($query);
+            $stmt->bindParam(':recipe_id', $recipeId);
+            $stmt->bindParam(':user_id', $userId);
+            $stmt->bindParam(':ip_address', $ipAddress);
+            
+            if ($stmt->execute()) {
+                error_log("View tracked successfully - Recipe ID: $recipeId");
+                return ['success' => true, 'message' => 'View tracked successfully'];
+            } else {
+                error_log("Failed to track view - Recipe ID: $recipeId");
+                return ['success' => false, 'error' => 'Failed to track view'];
+            }
+        } catch (Exception $e) {
+            error_log("Error tracking recipe view: " . $e->getMessage());
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
+    }
 }
 ?>

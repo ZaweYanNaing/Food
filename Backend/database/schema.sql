@@ -144,7 +144,6 @@ CREATE TABLE IF NOT EXISTS recipe_views (
     user_id INT,
     recipe_id INT NOT NULL,
     ip_address VARCHAR(45),
-    user_agent TEXT,
     viewed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,

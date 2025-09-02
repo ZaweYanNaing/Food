@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Star, Home } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -36,10 +36,16 @@ export default function RecipeDetailPage() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const viewTracked = useRef(false);
 
   useEffect(() => {
     if (id) {
       loadRecipe();
+      // Track the view when the page loads (only once per recipe)
+      if (!viewTracked.current) {
+        trackView();
+        viewTracked.current = true;
+      }
     }
   }, [id]);
 
@@ -57,6 +63,43 @@ export default function RecipeDetailPage() {
       setError('Failed to load recipe');
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const trackView = async () => {
+    try {
+      const recipeId = parseInt(id!);
+      const viewKey = `recipe_view_${recipeId}_${user?.id || 'anonymous'}`;
+      
+      // Check if we've already tracked this view in this session
+      const lastViewTime = localStorage.getItem(viewKey);
+      const now = Date.now();
+      const fiveMinutes = 5 * 60 * 1000; // 5 minutes in milliseconds
+      
+      if (lastViewTime && (now - parseInt(lastViewTime)) < fiveMinutes) {
+        console.log('View already tracked recently, skipping');
+        return;
+      }
+      
+      // For anonymous users, also check sessionStorage for extra protection
+      if (!user) {
+        const sessionKey = `session_view_${recipeId}`;
+        if (sessionStorage.getItem(sessionKey)) {
+          console.log('Anonymous view already tracked in this session, skipping');
+          return;
+        }
+        sessionStorage.setItem(sessionKey, '1');
+      }
+      
+      // Track the view
+      await apiService.trackRecipeView(recipeId, user?.id);
+      
+      // Store the timestamp to prevent duplicate tracking
+      localStorage.setItem(viewKey, now.toString());
+      
+    } catch (error) {
+      // Silently fail - view tracking shouldn't break the user experience
+      console.warn('Failed to track recipe view:', error);
     }
   };
 

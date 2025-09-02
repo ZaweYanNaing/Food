@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Star, Heart, Clock, TrendingUp, Flame, Clock3 } from 'lucide-react';
+import { Star, Heart, Clock, TrendingUp, Flame, Clock3, Eye } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import apiService from '../services/api';
@@ -164,6 +164,12 @@ export default function RecipeDiscoveryPage() {
               <span className="flex items-center text-sm text-red-500">
                 <Heart className="w-4 h-4 mr-1" />
                 {recipe.total_likes}
+              </span>
+            )}
+            {recipe.total_views && recipe.total_views > 0 && (
+              <span className="flex items-center text-sm text-blue-500">
+                <Eye className="w-4 h-4 mr-1" />
+                {recipe.total_views}
               </span>
             )}
           </div>

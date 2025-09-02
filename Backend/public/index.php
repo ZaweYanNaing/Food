@@ -65,6 +65,21 @@ try {
             }
             break;
             
+        case (preg_match('/^\/recipes\/(\d+)\/view$/', $uri, $matches) ? true : false):
+            $recipeId = $matches[1];
+            $controller = new RecipeController();
+            
+            if ($method === 'POST') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? null;
+                $result = $controller->trackRecipeView($recipeId, $userId);
+                echo json_encode($result);
+            } else {
+                http_response_code(405);
+                echo json_encode(['error' => 'Method not allowed']);
+            }
+            break;
+            
         case '/recipes/search':
             if ($method === 'GET') {
                 $controller = new RecipeController();

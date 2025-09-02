@@ -27,9 +27,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [currentEventIndex, setCurrentEventIndex] = useState(0);
   
-  const [trendingRecipes, setTrendingRecipes] = useState<any[]>([]);
-  const [popularRecipes, setPopularRecipes] = useState<any[]>([]);
-  const [recentRecipes, setRecentRecipes] = useState<any[]>([]);
+ 
 
   // Sample data - replace with API calls
   const newsFeedItems: NewsFeedItem[] = [
