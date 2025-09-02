@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Plus, Clock, Search, ThumbsUp } from 'lucide-react';
+import { Plus, Clock, Search, ThumbsUp, X, Trash2 } from 'lucide-react';
 import {Button} from '../components/ui/button';
 import { apiService } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Avatar, AvatarFallback, AvatarImage } from '@radix-ui/react-avatar';
+import { Avatar, AvatarFallback, AvatarImage } from '../components/ui/avatar';
 
 
 
@@ -37,6 +37,15 @@ export default function CommunityCookbookPage() {
   const [error, setError] = useState<string | null>(null);
   const [tipLikes, setTipLikes] = useState<{[tipId: number]: TipLike[]}>({});
   const [loadingLikes, setLoadingLikes] = useState<{[tipId: number]: boolean}>({});
+  
+  // Create tip form state
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [createLoading, setCreateLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '',
+    content: '',
+    prep_time: ''
+  });
 
   // Load cooking tips from API
   useEffect(() => {
@@ -186,6 +195,104 @@ export default function CommunityCookbookPage() {
 
 
 
+  // Handle form input changes
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      alert('Please log in to create cooking tips!');
+      return;
+    }
+
+    // Validate form
+    if (!formData.title.trim() || !formData.content.trim()) {
+      alert('Please fill in all required fields!');
+      return;
+    }
+
+    setCreateLoading(true);
+    try {
+      const tipData = {
+        title: formData.title.trim(),
+        content: formData.content.trim(),
+        user_id: user.id,
+        prep_time: formData.prep_time ? parseInt(formData.prep_time) : undefined
+      };
+
+      const response = await apiService.createCookingTip(tipData);
+      
+      if (response.success) {
+        // Reset form
+        setFormData({
+          title: '',
+          content: '',
+          prep_time: ''
+        });
+        setShowCreateForm(false);
+        
+        // Reload cooking tips to show the new one
+        await loadCookingTips();
+        
+        alert('Cooking tip created successfully!');
+      } else {
+        alert(response.message || 'Failed to create cooking tip');
+      }
+    } catch (error) {
+      console.error('Error creating cooking tip:', error);
+      alert('Failed to create cooking tip. Please try again.');
+    } finally {
+      setCreateLoading(false);
+    }
+  };
+
+  // Reset form
+  const resetForm = () => {
+    setFormData({
+      title: '',
+      content: '',
+      prep_time: ''
+    });
+    setShowCreateForm(false);
+  };
+
+  // Handle delete tip
+  const handleDeleteTip = async (tipId: number, tipTitle: string) => {
+    if (!user) {
+      alert('Please log in to delete cooking tips!');
+      return;
+    }
+
+    // Show confirmation dialog
+    const confirmed = confirm(`Are you sure you want to delete "${tipTitle}"? This action cannot be undone.`);
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      const response = await apiService.deleteCookingTip(tipId, user.id);
+      
+      if (response.success) {
+        // Remove the tip from the local state
+        setCookingTips(prevTips => prevTips.filter(tip => tip.id !== tipId));
+        alert('Cooking tip deleted successfully!');
+      } else {
+        alert(response.message || 'Failed to delete cooking tip');
+      }
+    } catch (error) {
+      console.error('Error deleting cooking tip:', error);
+      alert('Failed to delete cooking tip. Please try again.');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
@@ -200,7 +307,20 @@ export default function CommunityCookbookPage() {
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-4">
+            <Button 
+              size="lg" 
+              className="text-lg px-8 py-4"
+              onClick={() => {
+                if (!user) {
+                  const shouldLogin = confirm('You need to be logged in to create cooking tips. Would you like to go to the login page?');
+                  if (shouldLogin) {
+                    window.location.href = '/login';
+                  }
+                  return;
+                }
+                setShowCreateForm(true);
+              }}
+            >
               <Plus className="w-5 h-5 mr-2" />
               Share a Cooking Tip
             </Button>
@@ -231,7 +351,90 @@ export default function CommunityCookbookPage() {
         </div>
       </section>
 
-
+      {/* Create Cooking Tip Modal */}
+      {showCreateForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b">
+              <h2 className="text-2xl font-bold text-gray-900">Share a Cooking Tip</h2>
+              <button
+                onClick={resetForm}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div>
+                <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
+                  Tip Title *
+                </label>
+                <input
+                  type="text"
+                  id="title"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleInputChange}
+                  placeholder="e.g., Perfect Rice Every Time"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="content" className="block text-sm font-medium text-gray-700 mb-2">
+                  Cooking Tip *
+                </label>
+                <textarea
+                  id="content"
+                  name="content"
+                  value={formData.content}
+                  onChange={handleInputChange}
+                  placeholder="Share your cooking tip, technique, or advice..."
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label htmlFor="prep_time" className="block text-sm font-medium text-gray-700 mb-2">
+                  Prep Time (minutes) - Optional
+                </label>
+                <input
+                  type="number"
+                  id="prep_time"
+                  name="prep_time"
+                  value={formData.prep_time}
+                  onChange={handleInputChange}
+                  placeholder="e.g., 5"
+                  min="1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                />
+              </div>
+              
+              <div className="flex justify-end space-x-3 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={resetForm}
+                  disabled={createLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={createLoading}
+                  className="bg-orange-600 hover:bg-orange-700"
+                >
+                  {createLoading ? 'Creating...' : 'Share Tip'}
+                </Button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Content */}
       <section className="py-12">
@@ -255,7 +458,16 @@ export default function CommunityCookbookPage() {
                   <div className="text-6xl mb-4">💡</div>
                   <h3 className="text-xl font-semibold text-gray-900 mb-2">No cooking tips found</h3>
                   <p className="text-gray-600 mb-6">Try adjusting your search or be the first to share a tip!</p>
-                  <Button>Share Your First Tip</Button>
+                  <Button onClick={() => {
+                    if (!user) {
+                      const shouldLogin = confirm('You need to be logged in to create cooking tips. Would you like to go to the login page?');
+                      if (shouldLogin) {
+                        window.location.href = '/login';
+                      }
+                      return;
+                    }
+                    setShowCreateForm(true);
+                  }}>Share Your First Tip</Button>
                 </div>
               ) : (
                 cookingTips.map((tip) => (
@@ -297,7 +509,7 @@ export default function CommunityCookbookPage() {
                         </div>
                       </div>
                       
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center justify-between">
                         {/* Facebook-like Like Button */}
                         <div className="flex items-center">
                           <button
@@ -380,6 +592,18 @@ export default function CommunityCookbookPage() {
                             </div>
                           )}
                         </div>
+                        
+                        {/* Delete button for tip owner */}
+                        {user && user.id === tip.user_id && (
+                          <button
+                            onClick={() => handleDeleteTip(tip.id, tip.title)}
+                            className="flex items-center space-x-1 px-3 py-1.5 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-all duration-200"
+                            title="Delete this tip"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                            <span className="text-sm font-medium">Delete</span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </article>
@@ -400,7 +624,20 @@ export default function CommunityCookbookPage() {
             you've discovered, your knowledge can help others in their culinary journey.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-white text-orange-600 hover:bg-gray-100">
+            <Button 
+              size="lg" 
+              className="bg-white text-orange-600 hover:bg-gray-100"
+              onClick={() => {
+                if (!user) {
+                  const shouldLogin = confirm('You need to be logged in to create cooking tips. Would you like to go to the login page?');
+                  if (shouldLogin) {
+                    window.location.href = '/login';
+                  }
+                  return;
+                }
+                setShowCreateForm(true);
+              }}
+            >
               Share a Tip
             </Button>
           </div>

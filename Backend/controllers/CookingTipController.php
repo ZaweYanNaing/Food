@@ -108,8 +108,8 @@ class CookingTipController {
                 return ['success' => false, 'error' => 'Title and content are required'];
             }
             
-            if (empty($data['user_id'])) {
-                return ['success' => false, 'error' => 'User ID is required'];
+            if (empty($data['user_id']) || $data['user_id'] <= 0) {
+                return ['success' => false, 'error' => 'User must be logged in to create cooking tips'];
             }
             
             $query = "INSERT INTO cooking_tips (title, content, user_id, prep_time) 

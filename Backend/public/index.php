@@ -505,6 +505,14 @@ try {
                 echo json_encode($result);
             } elseif ($method === 'POST') {
                 $data = json_decode(file_get_contents('php://input'), true);
+                
+                // Validate user authentication
+                if (!isset($data['user_id']) || $data['user_id'] <= 0) {
+                    http_response_code(401);
+                    echo json_encode(['success' => false, 'error' => 'User must be logged in to create cooking tips']);
+                    break;
+                }
+                
                 $result = $controller->createTip($data);
                 echo json_encode($result);
             }
