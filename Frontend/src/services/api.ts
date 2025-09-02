@@ -390,6 +390,109 @@ class ApiService {
       return { success: false, message: 'Failed to track recipe view' };
     }
   }
+
+  // Cooking Tips endpoints
+  async getCookingTips(filters?: {
+    user_id?: number;
+    search?: string;
+    current_user_id?: number;
+  }): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (filters?.user_id) queryParams.append('user_id', filters.user_id.toString());
+    if (filters?.search) queryParams.append('search', filters.search);
+    if (filters?.current_user_id) queryParams.append('current_user_id', filters.current_user_id.toString());
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/cooking-tips?${queryString}` : '/cooking-tips';
+    return this.request(endpoint);
+  }
+
+  async getCookingTipById(id: number, userId?: number): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (userId) queryParams.append('user_id', userId.toString());
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/cooking-tips/${id}?${queryString}` : `/cooking-tips/${id}`;
+    return this.request(endpoint);
+  }
+
+  async createCookingTip(tipData: {
+    title: string;
+    content: string;
+    user_id: number;
+    prep_time?: number;
+  }): Promise<ApiResponse> {
+    return this.request('/cooking-tips', {
+      method: 'POST',
+      body: JSON.stringify(tipData),
+    });
+  }
+
+  async updateCookingTip(id: number, tipData: {
+    title: string;
+    content: string;
+    user_id: number;
+    prep_time?: number;
+  }): Promise<ApiResponse> {
+    return this.request(`/cooking-tips/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(tipData),
+    });
+  }
+
+  async deleteCookingTip(id: number, userId: number): Promise<ApiResponse> {
+    return this.request(`/cooking-tips/${id}`, {
+      method: 'DELETE',
+      body: JSON.stringify({ user_id: userId }),
+    });
+  }
+
+  async searchCookingTips(query: string): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams({ q: query });
+    return this.request(`/cooking-tips/search?${queryParams.toString()}`);
+  }
+
+  async getRecentCookingTips(limit: number = 10): Promise<ApiResponse> {
+    return this.request(`/cooking-tips/recent?limit=${limit}`);
+  }
+
+  async toggleCookingTipLike(userId: number, tipId: number): Promise<ApiResponse> {
+    return this.request('/cooking-tips/like', {
+      method: 'POST',
+      body: JSON.stringify({ user_id: userId, tip_id: tipId }),
+    });
+  }
+
+  async getUserCookingTips(userId: number): Promise<ApiResponse> {
+    return this.request(`/cooking-tips/user?user_id=${userId}`);
+  }
+
+  async getCookingTipLikes(tipId: number, limit?: number): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/cooking-tips/${tipId}/likes?${queryString}` : `/cooking-tips/${tipId}/likes`;
+    return this.request(endpoint);
+  }
+
+
+
+  // Analytics endpoints
+  async getMostLikedCookingTips(limit?: number, period?: string): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    if (period) queryParams.append('period', period);
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/cooking-tips/most-liked?${queryString}` : '/cooking-tips/most-liked';
+    return this.request(endpoint);
+  }
+
+  async getTrendingCookingTips(limit?: number): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (limit) queryParams.append('limit', limit.toString());
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/cooking-tips/trending?${queryString}` : '/cooking-tips/trending';
+    return this.request(endpoint);
+  }
 }
 
 export const apiService = new ApiService();

@@ -7,6 +7,7 @@ require_once '../controllers/RecipeController.php';
 require_once '../controllers/UserController.php';
 require_once '../controllers/AuthController.php';
 require_once '../controllers/RatingReviewController.php';
+require_once '../controllers/CookingTipController.php';
 
 // Get the request method and URI
 $method = $_SERVER['REQUEST_METHOD'];
@@ -487,6 +488,141 @@ try {
             if ($method === 'GET') {
                 $userId = $_GET['user_id'] ?? 1;
                 $result = $controller->getUserRecipeStatus($userId, $recipeId);
+                echo json_encode($result);
+            }
+            break;
+            
+        // Cooking Tips endpoints
+        case '/cooking-tips':
+            $controller = new CookingTipController();
+            if ($method === 'GET') {
+                $filters = [];
+                if (isset($_GET['user_id'])) $filters['user_id'] = $_GET['user_id'];
+                if (isset($_GET['search'])) $filters['search'] = $_GET['search'];
+                if (isset($_GET['current_user_id'])) $filters['current_user_id'] = $_GET['current_user_id'];
+                
+                $result = $controller->getAllTips($filters);
+                echo json_encode($result);
+            } elseif ($method === 'POST') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $result = $controller->createTip($data);
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/cooking-tips\/(\d+)$/', $uri, $matches) ? true : false):
+            $tipId = $matches[1];
+            $controller = new CookingTipController();
+            
+            if ($method === 'GET') {
+                $userId = $_GET['user_id'] ?? null;
+                $result = $controller->getTipById($tipId, $userId);
+                echo json_encode($result);
+            } elseif ($method === 'PUT') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $result = $controller->updateTip($tipId, $data);
+                echo json_encode($result);
+            } elseif ($method === 'DELETE') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? null;
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'User ID required for deletion']);
+                    break;
+                }
+                $result = $controller->deleteTip($tipId, $userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/cooking-tips/search':
+            if ($method === 'GET') {
+                $controller = new CookingTipController();
+                $query = $_GET['q'] ?? '';
+                $filters = [];
+                
+                $result = $controller->searchTips($query, $filters);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/cooking-tips/recent':
+            if ($method === 'GET') {
+                $controller = new CookingTipController();
+                $limit = $_GET['limit'] ?? 10;
+                $result = $controller->getRecentTips($limit);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/cooking-tips/like':
+            if ($method === 'POST') {
+                $controller = new CookingTipController();
+                $data = json_decode(file_get_contents('php://input'), true);
+                $userId = $data['user_id'] ?? null;
+                $tipId = $data['tip_id'] ?? null;
+                
+                if (!$tipId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Tip ID required']);
+                    break;
+                }
+                
+                if (!$userId || $userId <= 0) {
+                    http_response_code(401);
+                    echo json_encode(['success' => false, 'error' => 'User must be logged in to like cooking tips']);
+                    break;
+                }
+                
+                $result = $controller->toggleLike($userId, $tipId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/cooking-tips/user':
+            if ($method === 'GET') {
+                $controller = new CookingTipController();
+                $userId = $_GET['user_id'] ?? null;
+                if (!$userId) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'User ID required']);
+                    break;
+                }
+                $result = $controller->getUserTips($userId);
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/cooking-tips\/(\d+)\/likes$/', $uri, $matches) ? true : false):
+            $tipId = $matches[1];
+            $controller = new CookingTipController();
+            
+            if ($method === 'GET') {
+                $limit = $_GET['limit'] ?? 10;
+                $result = $controller->getTipLikes($tipId, $limit);
+                echo json_encode($result);
+            }
+            break;
+            
+
+            
+        case '/cooking-tips/most-liked':
+            $controller = new CookingTipController();
+            
+            if ($method === 'GET') {
+                $limit = $_GET['limit'] ?? 10;
+                $period = $_GET['period'] ?? 'all';
+                $result = $controller->getMostLikedTips($limit, $period);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/cooking-tips/trending':
+            $controller = new CookingTipController();
+            
+            if ($method === 'GET') {
+                $limit = $_GET['limit'] ?? 10;
+                $result = $controller->getTrendingTips($limit);
                 echo json_encode($result);
             }
             break;
