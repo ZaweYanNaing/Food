@@ -1,18 +1,20 @@
 import { useState } from 'react';
-import { Mail, Phone, MapPin, Clock, Send, MessageSquare, FileText, Star } from 'lucide-react';
-import {Button} from '../components/ui/button';
+import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { Button } from '../components/ui/button';
+import { apiService } from '../services/api';
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     subject: '',
-    message: '',
-    contactType: 'general'
+    message: ''
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -22,108 +24,133 @@ export default function ContactPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    // Handle success
-    alert('Thank you for your message! We\'ll get back to you soon.');
-    setFormData({
-      name: '',
-      email: '',
-      subject: '',
-      message: '',
-      contactType: 'general'
-    });
-    setIsSubmitting(false);
-  };
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
 
-  const contactTypes = [
-    { value: 'general', label: 'General Inquiry', icon: MessageSquare },
-    { value: 'recipe_request', label: 'Recipe Request', icon: FileText },
-    { value: 'feedback', label: 'Feedback', icon: Star },
-    { value: 'technical', label: 'Technical Support', icon: MessageSquare },
-    { value: 'partnership', label: 'Partnership', icon: MessageSquare }
-  ];
+    try {
+      const response = await apiService.submitContactMessage(formData);
+      
+      if (response.success) {
+        setSuccess(true);
+        setFormData({
+          name: '',
+          email: '',
+          subject: '',
+          message: ''
+        });
+      } else {
+        setError(response.message || response.error || 'Failed to send message. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error sending contact message:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Failed to send message. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-orange-50 to-red-50 py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+      <section className="bg-gradient-to-br from-orange-100 to-red-100 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 text-center mb-6">
             Contact Us
           </h1>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Have a question, recipe request, or feedback? We'd love to hear from you! 
-            Our team is here to help and always excited to connect with fellow food enthusiasts.
+          <p className="text-xl text-gray-600 text-center max-w-3xl mx-auto">
+            Have a question, suggestion, or just want to say hello? We'd love to hear from you! 
+            Send us a message and we'll get back to you as soon as possible.
           </p>
         </div>
       </section>
 
-      {/* Contact Information */}
-      <section className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#78C841]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Mail className="w-8 h-8 text-[#78C841]" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Email Us</h3>
-              <p className="text-gray-600 mb-2">We typically respond within 24 hours</p>
-              <a href="mailto:contact@foodfusion.com" className="text-[#78C841] hover:text-[#6bb03a] font-medium">
-                contact@foodfusion.com
-              </a>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#B4E50D]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Phone className="w-8 h-8 text-[#B4E50D]" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Call Us</h3>
-              <p className="text-gray-600 mb-2">Monday - Friday, 9 AM - 6 PM EST</p>
-              <a href="tel:+1-555-123-4567" className="text-[#B4E50D] hover:text-[#a3d40c] font-medium">
-                +1 (555) 123-4567
-              </a>
-            </div>
-            
-            <div className="text-center">
-              <div className="w-16 h-16 bg-[#FF9B2F]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <MapPin className="w-8 h-8 text-[#FF9B2F]" />
-              </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">Visit Us</h3>
-              <p className="text-gray-600 mb-2">FoodFusion Headquarters</p>
-              <p className="text-gray-600">
-                123 Culinary Street<br />
-                Foodie City, FC 12345
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
+          {/* Contact Information */}
+          <div className="space-y-8">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900 mb-6">Get in Touch</h2>
+              <p className="text-lg text-gray-600 mb-8">
+                We're here to help and answer any question you might have. 
+                We look forward to hearing from you!
               </p>
             </div>
-          </div>
 
-          <div className="bg-gray-50 rounded-lg p-8 text-center">
-            <h3 className="text-2xl font-bold text-gray-900 mb-4">Office Hours</h3>
-            <div className="flex items-center justify-center space-x-8 text-gray-600">
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5" />
-                <span>Monday - Friday: 9:00 AM - 6:00 PM EST</span>
+            <div className="space-y-6">
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Mail className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Email</h3>
+                  <p className="text-gray-600">contact@foodfusion.com</p>
+                  <p className="text-sm text-gray-500">We'll respond within 24 hours</p>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5" />
-                <span>Saturday: 10:00 AM - 4:00 PM EST</span>
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Phone className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Phone</h3>
+                  <p className="text-gray-600">+1 (555) 123-4567</p>
+                  <p className="text-sm text-gray-500">Mon-Fri 9am-6pm EST</p>
+                </div>
+              </div>
+
+              <div className="flex items-start space-x-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <MapPin className="w-6 h-6 text-orange-600" />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Office</h3>
+                  <p className="text-gray-600">123 Food Street</p>
+                  <p className="text-gray-600">Culinary City, CC 12345</p>
+                </div>
               </div>
             </div>
-            <p className="text-sm text-gray-500 mt-2">Closed on Sundays and major holidays</p>
-          </div>
-        </div>
-      </section>
 
-      {/* Contact Form */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="bg-orange-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Why Contact Us?</h3>
+              <ul className="space-y-2 text-gray-600">
+                <li>• Have questions about our recipes?</li>
+                <li>• Want to suggest new features?</li>
+                <li>• Found a bug or issue?</li>
+                <li>• Want to collaborate with us?</li>
+                <li>• General feedback and suggestions</li>
+              </ul>
+            </div>
+          </div>
+
+          {/* Contact Form */}
           <div className="bg-white rounded-lg shadow-lg p-8">
-            <h2 className="text-3xl font-bold text-gray-900 text-center mb-8">Send Us a Message</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
             
+            {success && (
+              <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg flex items-center space-x-3">
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <p className="text-green-800">Thank you for your message! We'll get back to you soon.</p>
+              </div>
+            )}
+
+            {error && (
+              <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800">{error}</p>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
@@ -137,11 +164,11 @@ export default function ContactPage() {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
-                    placeholder="Enter your full name"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="Your full name"
                   />
                 </div>
-                
+
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
                     Email Address *
@@ -153,155 +180,113 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
-                    placeholder="Enter your email address"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    placeholder="your.email@example.com"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label htmlFor="contactType" className="block text-sm font-medium text-gray-700 mb-2">
-                  Contact Type *
-                </label>
-                                  <select
-                    id="contactType"
-                    name="contactType"
-                    value={formData.contactType}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
-                  >
-                  {contactTypes.map((type) => (
-                    <option key={type.value} value={type.value}>
-                      {type.label}
-                    </option>
-                  ))}
-                </select>
               </div>
 
               <div>
                 <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
                   Subject *
                 </label>
-                                  <input
-                    type="text"
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
-                    placeholder="Brief description of your inquiry"
-                  />
+                <input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  value={formData.subject}
+                  onChange={handleInputChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  placeholder="What's this about?"
+                />
               </div>
 
               <div>
                 <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
                   Message *
                 </label>
-                                  <textarea
-                    id="message"
-                    name="message"
-                    value={formData.message}
-                    onChange={handleInputChange}
-                    required
-                    rows={6}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#78C841] focus:border-transparent"
-                    placeholder="Please provide details about your inquiry, recipe request, or feedback..."
-                  />
+                <textarea
+                  id="message"
+                  name="message"
+                  value={formData.message}
+                  onChange={handleInputChange}
+                  required
+                  rows={6}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent resize-none"
+                  placeholder="Tell us more about your question or feedback..."
+                />
               </div>
 
-              <div className="text-center">
-                <Button
-                  type="submit"
-                  size="lg"
-                  disabled={isSubmitting}
-                  className="w-full md:w-auto px-8 py-4"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
-                      Sending Message...
-                    </>
-                  ) : (
-                    <>
-                      <Send className="w-5 h-5 mr-2" />
-                      Send Message
-                    </>
-                  )}
-                </Button>
-              </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-orange-600 hover:bg-orange-700 text-white py-3 px-6 rounded-lg font-medium transition-colors duration-200"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Sending...</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center space-x-2">
+                    <Send className="w-4 h-4" />
+                    <span>Send Message</span>
+                  </div>
+                )}
+              </Button>
             </form>
           </div>
         </div>
-      </section>
+      </div>
 
       {/* FAQ Section */}
-      <section className="py-16 bg-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
-          
-          <div className="space-y-6">
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                How can I submit my own recipe?
-              </h3>
-              <p className="text-gray-600">
-                You can submit your recipe through our Community Cookbook page. Simply click on "Share Your Recipe" 
-                and fill out the form with your recipe details, ingredients, and instructions.
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Can I request a specific recipe?
-              </h3>
-              <p className="text-gray-600">
-                Absolutely! Use the contact form above and select "Recipe Request" as the contact type. 
-                We'll do our best to find or create the recipe you're looking for.
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                How do I report an issue with the website?
-              </h3>
-              <p className="text-gray-600">
-                For technical issues, please select "Technical Support" as the contact type when sending us a message. 
-                Include details about the problem and your device/browser information.
-              </p>
-            </div>
-            
-            <div className="bg-gray-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                Are you looking for content contributors?
-              </h3>
-              <p className="text-gray-600">
-                Yes! We're always looking for passionate food enthusiasts to contribute recipes, tips, and articles. 
-                Select "Partnership" as the contact type and tell us about your culinary expertise.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Call to Action */}
-      <section className="py-16 bg-[#78C841]">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Join Our Community
+      <section className="bg-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
+            Frequently Asked Questions
           </h2>
-          <p className="text-xl text-white/90 mb-8 max-w-2xl mx-auto">
-            Don't just browse recipes - become part of our growing community of food lovers, 
-            share your knowledge, and discover new culinary adventures.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button variant="outline" size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
-              Sign Up Now
-            </Button>
-            <Button size="lg" className="bg-white text-[#78C841] hover:bg-gray-100">
-              Explore Recipes
-            </Button>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  How quickly do you respond?
+                </h3>
+                <p className="text-gray-600">
+                  We typically respond to all messages within 24 hours during business days.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Can I suggest new features?
+                </h3>
+                <p className="text-gray-600">
+                  Absolutely! We love hearing from our community about new features and improvements.
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Do you offer technical support?
+                </h3>
+                <p className="text-gray-600">
+                  Yes, we provide technical support for any issues you encounter on our platform.
+                </p>
+              </div>
+              
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                  Can I report a bug?
+                </h3>
+                <p className="text-gray-600">
+                  Please do! Use the contact form to report any bugs or issues you discover.
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </section>

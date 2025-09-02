@@ -1,8 +1,9 @@
-const API_BASE_URL = 'http://localhost:8080/api';
+const API_BASE_URL = '/api';
 
 interface ApiResponse<T = any> {
   success: boolean;
   message?: string;
+  error?: string;
   data?: T;
   user?: any;
   token?: string;
@@ -492,6 +493,46 @@ class ApiService {
     const queryString = queryParams.toString();
     const endpoint = queryString ? `/cooking-tips/trending?${queryString}` : '/cooking-tips/trending';
     return this.request(endpoint);
+  }
+
+  // Contact endpoints
+  async submitContactMessage(messageData: {
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+  }): Promise<ApiResponse> {
+    return this.request('/contact', {
+      method: 'POST',
+      body: JSON.stringify(messageData),
+    });
+  }
+
+  async getContactMessages(filters?: {
+    status?: string;
+    search?: string;
+  }): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (filters?.status) queryParams.append('status', filters.status);
+    if (filters?.search) queryParams.append('search', filters.search);
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/contact?${queryString}` : '/contact';
+    return this.request(endpoint);
+  }
+
+  async getContactMessageById(id: number): Promise<ApiResponse> {
+    return this.request(`/contact/${id}`);
+  }
+
+  async updateContactMessageStatus(id: number, status: string): Promise<ApiResponse> {
+    return this.request(`/contact/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+  }
+
+  async getContactMessageStats(): Promise<ApiResponse> {
+    return this.request('/contact/stats');
   }
 }
 

@@ -1,6 +1,16 @@
 <?php
-// Set content type only - CORS headers are handled by Apache .htaccess
+// Set CORS headers
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Max-Age: 86400');
 header('Content-Type: application/json');
+
+// Handle preflight OPTIONS request
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 require_once '../config/database.php';
 require_once '../controllers/RecipeController.php';
@@ -8,6 +18,7 @@ require_once '../controllers/UserController.php';
 require_once '../controllers/AuthController.php';
 require_once '../controllers/RatingReviewController.php';
 require_once '../controllers/CookingTipController.php';
+require_once '../controllers/ContactController.php';
 
 // Get the request method and URI
 $method = $_SERVER['REQUEST_METHOD'];
@@ -631,6 +642,56 @@ try {
             if ($method === 'GET') {
                 $limit = $_GET['limit'] ?? 10;
                 $result = $controller->getTrendingTips($limit);
+                echo json_encode($result);
+            }
+            break;
+            
+        // Contact endpoints
+        case '/contact':
+            $controller = new ContactController();
+            
+            if ($method === 'POST') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $result = $controller->submitMessage($data);
+                echo json_encode($result);
+            } elseif ($method === 'GET') {
+                // Admin endpoint to get all messages
+                $filters = [];
+                if (isset($_GET['status'])) $filters['status'] = $_GET['status'];
+                if (isset($_GET['search'])) $filters['search'] = $_GET['search'];
+                
+                $result = $controller->getAllMessages($filters);
+                echo json_encode($result);
+            }
+            break;
+            
+        case '/contact/stats':
+            $controller = new ContactController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getMessageStats();
+                echo json_encode($result);
+            }
+            break;
+            
+        case (preg_match('/^\/contact\/(\d+)$/', $uri, $matches) ? true : false):
+            $messageId = $matches[1];
+            $controller = new ContactController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getMessageById($messageId);
+                echo json_encode($result);
+            } elseif ($method === 'PUT') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $status = $data['status'] ?? null;
+                
+                if (!$status) {
+                    http_response_code(400);
+                    echo json_encode(['success' => false, 'error' => 'Status is required']);
+                    break;
+                }
+                
+                $result = $controller->updateMessageStatus($messageId, $status);
                 echo json_encode($result);
             }
             break;
