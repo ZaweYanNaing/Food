@@ -157,7 +157,7 @@ export default function EducationalResourcesPage() {
       if (error instanceof SyntaxError && error.message.includes('JSON')) {
         alert('Server returned an error. Please check the file type and size, and try again.');
       } else {
-        alert('Failed to upload resource: ' + error.message);
+        alert('Failed to upload resource: ');
       }
     } finally {
       setUploadLoading(false);
