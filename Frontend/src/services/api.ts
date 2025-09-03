@@ -534,6 +534,87 @@ class ApiService {
   async getContactMessageStats(): Promise<ApiResponse> {
     return this.request('/contact/stats');
   }
+
+  // Educational Resources endpoints
+  async getEducationalResources(filters?: {
+    type?: string;
+    search?: string;
+    sort?: string;
+    limit?: number;
+    offset?: number;
+  }): Promise<ApiResponse> {
+    const queryParams = new URLSearchParams();
+    if (filters?.type) queryParams.append('type', filters.type);
+    if (filters?.search) queryParams.append('search', filters.search);
+    if (filters?.sort) queryParams.append('sort', filters.sort);
+    if (filters?.limit) queryParams.append('limit', filters.limit.toString());
+    if (filters?.offset) queryParams.append('offset', filters.offset.toString());
+    
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/educational-resources?${queryString}` : '/educational-resources';
+    return this.request(endpoint);
+  }
+
+  async getEducationalResourceById(id: number): Promise<ApiResponse> {
+    return this.request(`/educational-resources/${id}`);
+  }
+
+  async createEducationalResource(resourceData: {
+    title: string;
+    description: string;
+    type: string;
+    file_path?: string;
+    created_by?: number;
+  }): Promise<ApiResponse> {
+    return this.request('/educational-resources', {
+      method: 'POST',
+      body: JSON.stringify(resourceData),
+    });
+  }
+
+  async uploadEducationalResource(formData: FormData): Promise<ApiResponse> {
+    return this.request('/educational-resources', {
+      method: 'POST',
+      body: formData,
+    });
+  }
+
+  async updateEducationalResource(id: number, resourceData: any): Promise<ApiResponse> {
+    return this.request(`/educational-resources/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(resourceData),
+    });
+  }
+
+  async deleteEducationalResource(id: number): Promise<ApiResponse> {
+    return this.request(`/educational-resources/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+
+
+  async getEducationalResourceStatistics(): Promise<ApiResponse> {
+    return this.request('/educational-resources/statistics');
+  }
+
+  async downloadEducationalResource(id: number): Promise<void> {
+    try {
+      // Create a hidden link and trigger download
+      // Use direct backend URL since download.php is not in the API directory
+      const downloadUrl = `http://localhost:8080/download.php/${id}`;
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.style.display = 'none';
+      link.target = '_blank';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error('Download error:', error);
+      throw error;
+    }
+  }
 }
 
 export const apiService = new ApiService();

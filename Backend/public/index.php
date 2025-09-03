@@ -1,4 +1,9 @@
 <?php
+// Enable error reporting for debugging
+error_reporting(E_ALL);
+ini_set('display_errors', 0); // Don't display errors in output
+ini_set('log_errors', 1);
+
 // Set CORS headers
 header('Access-Control-Allow-Origin: *');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -12,6 +17,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit();
 }
 
+// Set error handler to return JSON instead of HTML
+set_error_handler(function($severity, $message, $file, $line) {
+    error_log("PHP Error: $message in $file on line $line");
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Server error occurred']);
+    exit();
+});
+
+// Set exception handler
+set_exception_handler(function($exception) {
+    error_log("PHP Exception: " . $exception->getMessage());
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Server error occurred']);
+    exit();
+});
+
 require_once '../config/database.php';
 require_once '../controllers/RecipeController.php';
 require_once '../controllers/UserController.php';
@@ -19,6 +40,7 @@ require_once '../controllers/AuthController.php';
 require_once '../controllers/RatingReviewController.php';
 require_once '../controllers/CookingTipController.php';
 require_once '../controllers/ContactController.php';
+require_once '../controllers/EducationalResourcesController.php';
 
 // Get the request method and URI
 $method = $_SERVER['REQUEST_METHOD'];
@@ -692,6 +714,66 @@ try {
                 }
                 
                 $result = $controller->updateMessageStatus($messageId, $status);
+                echo json_encode($result);
+            }
+            break;
+            
+        // Educational Resources endpoints
+        case '/educational-resources':
+            $controller = new EducationalResourcesController();
+            
+            if ($method === 'GET') {
+                $filters = [];
+                if (isset($_GET['type'])) $filters['type'] = $_GET['type'];
+                if (isset($_GET['search'])) $filters['search'] = $_GET['search'];
+                if (isset($_GET['sort'])) $filters['sort'] = $_GET['sort'];
+                if (isset($_GET['limit'])) $filters['limit'] = $_GET['limit'];
+                if (isset($_GET['offset'])) $filters['offset'] = $_GET['offset'];
+                
+                $result = $controller->getAllResources($filters);
+                echo json_encode($result);
+            } elseif ($method === 'POST') {
+                // Handle file upload
+                if (isset($_FILES['file']) && $_FILES['file']['error'] === UPLOAD_ERR_OK) {
+                    $title = $_POST['title'] ?? '';
+                    $description = $_POST['description'] ?? '';
+                    $type = $_POST['type'] ?? 'document';
+                    $createdBy = $_POST['created_by'] ?? null;
+                    
+                    $result = $controller->createResourceWithFile($title, $description, $type, $_FILES['file'], $createdBy);
+                    echo json_encode($result);
+                } else {
+                    // Handle JSON data without file
+                    $data = json_decode(file_get_contents('php://input'), true);
+                    $result = $controller->createResource($data);
+                    echo json_encode($result);
+                }
+            }
+            break;
+            
+        case '/educational-resources/statistics':
+            $controller = new EducationalResourcesController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getStatistics();
+                echo json_encode($result);
+            }
+            break;
+            
+
+        case (preg_match('/^\/educational-resources\/(\d+)$/', $uri, $matches) ? true : false):
+            $resourceId = $matches[1];
+            $controller = new EducationalResourcesController();
+            
+            if ($method === 'GET') {
+                $result = $controller->getResourceById($resourceId);
+                echo json_encode($result);
+            } elseif ($method === 'PUT') {
+                $data = json_decode(file_get_contents('php://input'), true);
+                $result = $controller->updateResource($resourceId, $data);
+                echo json_encode($result);
+            } elseif ($method === 'DELETE') {
+                $result = $controller->deleteResource($resourceId);
                 echo json_encode($result);
             }
             break;
